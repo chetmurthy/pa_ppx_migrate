@@ -38,6 +38,7 @@ install: sys
 	$(OCAMLFIND) install pa_ppx_ocaml_migrate_parsetree local-install/lib/pa_ppx_ocaml_migrate_parsetree/*
 
 uninstall:
+	$(OCAMLFIND) remove pa_ppx_migrate || true
 	$(OCAMLFIND) remove pa_ppx_ocaml_migrate_parsetree || true
 
 clean::
