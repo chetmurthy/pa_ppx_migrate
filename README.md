@@ -1,6 +1,6 @@
 A PPX Rewriter to help migrate from one version of an AST to another.
 
-# Version
+### Version
 
 This is ``pa_ppx_migrate`` (alpha) version 0.01.
 
@@ -12,6 +12,14 @@ to the Ocaml 4.03 AST, or in the backward direction.  There's already
 a package that does this: `ocaml-migrate-parsetree`, and this package
 is intended as a demonstration that significant automated assistance
 can be brought to bear on the problem.
+
+## Tests and Examples
+
+This project ships with a simple example of an AST migration (the one
+explained below) in the directory `test` as well as a full set of
+migrations for the Ocaml AST in the directory
+`pa_ocaml_migrate_parsetree`.  Both are built as part of the standard
+build procedure.
 
 # How it works: A slightly long-winded explanation
 

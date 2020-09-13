@@ -55,5 +55,6 @@ depexts: [
 
 build: [
   [make "sys"]
+  [make "test"]
 ]
 install: [make "install"]
