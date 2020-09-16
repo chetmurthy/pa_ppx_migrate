@@ -34,7 +34,7 @@ let wrap_loc inh v =
 let _rewrite_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
 
-let rewrite_402_label_403_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Asttypes.arg_label =
+let rewrite_402_label_405_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Asttypes.arg_label =
   fun __dt__ __inh__ x ->
     if x <> "" then
       if x.[0] = '?' then DST.Asttypes.Optional (String.sub x 1 (String.length x - 1))
@@ -42,7 +42,7 @@ let rewrite_402_label_403_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Astt
     else
       DST.Asttypes.Nolabel
 
-let rewrite_402_constant_403_constant :
+let rewrite_402_constant_405_constant :
   'a -> 'b -> SRC.Asttypes.constant -> DST.Parsetree.constant =
   fun __dt__ __inh__ -> function
   | SRC.Asttypes.Const_int x0 ->
@@ -397,7 +397,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
       ; rewrite_constant = {
           srctype = [%typ: constant]
         ; dsttype = [%typ: DST.Parsetree.constant]
-        ; code = rewrite_402_constant_403_constant
+        ; code = rewrite_402_constant_405_constant
         }
       ; rewrite_list = {
           srctype = [%typ: 'a list]
@@ -437,7 +437,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
             Ptyp_arrow (v_0, v_1, v_2) ->
             let open DST.Parsetree in
             Ptyp_arrow
-              (rewrite_402_label_403_arg_label __dt__ __inh__ v_0,
+              (rewrite_402_label_405_arg_label __dt__ __inh__ v_0,
                __dt__.rewrite_core_type __dt__ __inh__ v_1,
                __dt__.rewrite_core_type __dt__ __inh__ v_2)
             | Ptyp_object (v_0, v_1) ->
@@ -485,7 +485,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
               Pexp_fun (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Pexp_fun
-                (rewrite_402_label_403_arg_label __dt__ __inh__ v_0,
+                (rewrite_402_label_405_arg_label __dt__ __inh__ v_0,
                  __dt__.rewrite_option __dt__.rewrite_expression __dt__ __inh__ v_1,
                  __dt__.rewrite_pattern __dt__ __inh__ v_2,
                  __dt__.rewrite_expression __dt__ __inh__ v_3)
@@ -494,7 +494,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
               Pexp_apply
                 (__dt__.rewrite_expression __dt__ __inh__ v_0,
                  List.map (fun (v_0, v_1) ->
-                     rewrite_402_label_403_arg_label __dt__ __inh__ v_0,
+                     rewrite_402_label_405_arg_label __dt__ __inh__ v_0,
                      __dt__.rewrite_expression __dt__ __inh__ v_1) v_1)
             | Pexp_send (v_0, v_1) ->
               let open DST.Parsetree in
@@ -571,7 +571,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
 Pcty_arrow (v_0, v_1, v_2) ->
       let open DST.Parsetree in
       Pcty_arrow
-        (rewrite_402_label_403_arg_label __dt__ __inh__ v_0,
+        (rewrite_402_label_405_arg_label __dt__ __inh__ v_0,
          __dt__.rewrite_core_type __dt__ __inh__ v_1,
          __dt__.rewrite_class_type __dt__ __inh__ v_2)
         }
@@ -634,7 +634,7 @@ Pcty_arrow (v_0, v_1, v_2) ->
               Pcl_fun (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Pcl_fun
-                (rewrite_402_label_403_arg_label __dt__ __inh__ v_0,
+                (rewrite_402_label_405_arg_label __dt__ __inh__ v_0,
                  Option.map (__dt__.rewrite_expression __dt__ __inh__)  v_1,
                  __dt__.rewrite_pattern __dt__ __inh__ v_2,
                  __dt__.rewrite_class_expr __dt__ __inh__ v_3)
@@ -643,7 +643,7 @@ Pcty_arrow (v_0, v_1, v_2) ->
               Pcl_apply
                 (__dt__.rewrite_class_expr __dt__ __inh__ v_0,
                  List.map (fun (v_0, v_1) ->
-                     rewrite_402_label_403_arg_label __dt__ __inh__ v_0,
+                     rewrite_402_label_405_arg_label __dt__ __inh__ v_0,
                      __dt__.rewrite_expression __dt__ __inh__ v_1)
                    v_1)
         }

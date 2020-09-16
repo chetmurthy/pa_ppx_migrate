@@ -1,6 +1,6 @@
 
 module SRC = All_ast.Ast_4_02
-module DST = All_ast.Ast_4_04
+module DST = All_ast.Ast_4_06
 
 let src_loc_none =
   let open SRC.Lexing in
@@ -24,10 +24,23 @@ let dst_loc_none =
   } in
   { loc_start = loc; loc_end = loc; loc_ghost = true }
 
+let wrap_loc inh v =
+  let loc = match inh with
+      None -> src_loc_none
+    | Some loc -> loc in
+  let open SRC.Location in
+  { txt = v ; loc = loc }
+
+let map_loc f v =
+  let open SRC.Location in
+  { txt = f v.txt ; loc = v.loc }
+
+let unwrap_loc v = v.SRC.Location.txt
+
 let _rewrite_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
 
-let rewrite_402_label_404_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Asttypes.arg_label =
+let rewrite_402_label_406_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Asttypes.arg_label =
   fun __dt__ __inh__ x ->
     if x <> "" then
       if x.[0] = '?' then DST.Asttypes.Optional (String.sub x 1 (String.length x - 1))
@@ -35,7 +48,7 @@ let rewrite_402_label_404_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Astt
     else
       DST.Asttypes.Nolabel
 
-let rewrite_402_constant_403_constant :
+let rewrite_402_constant_406_constant :
   'a -> 'b -> SRC.Asttypes.constant -> DST.Parsetree.constant =
   fun __dt__ __inh__ -> function
   | SRC.Asttypes.Const_int x0 ->
@@ -338,6 +351,18 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
           srctype = [%typ: location_t]
         ; dsttype = [%typ: DST.Location.t]
         }
+      ; rewrite_string_Location_loc = {
+          srctype = [%typ: string location_loc]
+        ; dsttype = [%typ: string DST.Location.loc]
+        }
+      ; rewrite_label_Location_loc = {
+          srctype = [%typ: label location_loc]
+        ; dsttype = [%typ: label DST.Location.loc]
+        }
+      ; rewrite_longident_Location_loc = {
+          srctype = [%typ: longident_t location_loc]
+        ; dsttype = [%typ: DST.Longident.t DST.Location.loc]
+        }
       ; rewrite_Location_loc = {
           srctype = [%typ: 'a location_loc]
         ; dsttype = [%typ: 'b DST.Location.loc]
@@ -386,7 +411,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
       ; rewrite_constant = {
           srctype = [%typ: constant]
         ; dsttype = [%typ: DST.Parsetree.constant]
-        ; code = rewrite_402_constant_403_constant
+        ; code = rewrite_402_constant_406_constant
         }
       ; rewrite_list = {
           srctype = [%typ: 'a list]
@@ -426,9 +451,24 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
             Ptyp_arrow (v_0, v_1, v_2) ->
             let open DST.Parsetree in
             Ptyp_arrow
-              (rewrite_402_label_404_arg_label __dt__ __inh__ v_0,
+              (rewrite_402_label_406_arg_label __dt__ __inh__ v_0,
                __dt__.rewrite_core_type __dt__ __inh__ v_1,
                __dt__.rewrite_core_type __dt__ __inh__ v_2)
+            | Ptyp_object (v_0, v_1) ->
+              let open DST.Parsetree in
+              Ptyp_object
+                (List.map (fun (v_0, v_1, v_2) ->
+                     Otag(__dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                          __dt__.rewrite_attributes __dt__ __inh__ v_1,
+                          __dt__.rewrite_core_type __dt__ __inh__ v_2)) v_0,
+                 __dt__.rewrite_closed_flag __dt__ __inh__ v_1)
+                
+            | Ptyp_poly (v_0, v_1) ->
+              let open DST.Parsetree in
+              Ptyp_poly
+                (List.map (fun v_0 ->
+                  __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0)) v_0,
+                 __dt__.rewrite_core_type __dt__ __inh__ v_1)
         }
       ; rewrite_package_type = {
           srctype = [%typ: package_type]
@@ -437,6 +477,14 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
       ; rewrite_row_field = {
           srctype = [%typ: row_field]
         ; dsttype = [%typ: DST.Parsetree.row_field]
+        ; custom_branches_code = function
+              Rtag (v_0, v_1, v_2, v_3) ->
+              let open DST.Parsetree in
+              Rtag
+                (__dt__.rewrite_label_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                 __dt__.rewrite_attributes __dt__ __inh__ v_1,
+                 v_2,
+                 List.map (__dt__.rewrite_core_type __dt__ __inh__) v_3)
         }
       ; rewrite_pattern = {
           srctype = [%typ: pattern]
@@ -459,7 +507,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
               Pexp_fun (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Pexp_fun
-                (rewrite_402_label_404_arg_label __dt__ __inh__ v_0,
+                (rewrite_402_label_406_arg_label __dt__ __inh__ v_0,
                  __dt__.rewrite_option __dt__.rewrite_expression __dt__ __inh__ v_1,
                  __dt__.rewrite_pattern __dt__ __inh__ v_2,
                  __dt__.rewrite_expression __dt__ __inh__ v_3)
@@ -468,8 +516,18 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
               Pexp_apply
                 (__dt__.rewrite_expression __dt__ __inh__ v_0,
                  List.map (fun (v_0, v_1) ->
-                     rewrite_402_label_404_arg_label __dt__ __inh__ v_0,
+                     rewrite_402_label_406_arg_label __dt__ __inh__ v_0,
                      __dt__.rewrite_expression __dt__ __inh__ v_1) v_1)
+            | Pexp_send (v_0, v_1) ->
+              let open DST.Parsetree in
+              Pexp_send
+                (__dt__.rewrite_expression __dt__ __inh__ v_0,
+                 __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_1))
+            | Pexp_newtype (v_0, v_1) ->
+              let open DST.Parsetree in
+              Pexp_newtype
+                (__dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                 __dt__.rewrite_expression __dt__ __inh__ v_1)
         }
       ; rewrite_case = {
           srctype = [%typ: case]
@@ -535,7 +593,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
 Pcty_arrow (v_0, v_1, v_2) ->
       let open DST.Parsetree in
       Pcty_arrow
-        (rewrite_402_label_404_arg_label __dt__ __inh__ v_0,
+        (rewrite_402_label_406_arg_label __dt__ __inh__ v_0,
          __dt__.rewrite_core_type __dt__ __inh__ v_1,
          __dt__.rewrite_class_type __dt__ __inh__ v_2)
         }
@@ -551,6 +609,26 @@ Pcty_arrow (v_0, v_1, v_2) ->
       ; rewrite_class_type_field_desc = {
           srctype = [%typ: class_type_field_desc]
         ; dsttype = [%typ: DST.Parsetree.class_type_field_desc]
+        ; custom_branches_code = function
+            | Pctf_val v_0 ->
+              let open DST.Parsetree in
+              Pctf_val
+                ((fun (v_0, v_1, v_2, v_3) ->
+                    __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                    __dt__.rewrite_mutable_flag __dt__ __inh__ v_1,
+                    __dt__.rewrite_virtual_flag __dt__ __inh__ v_2,
+                    __dt__.rewrite_core_type __dt__ __inh__ v_3)
+                   v_0)
+
+            | Pctf_method v_0 ->
+              let open DST.Parsetree in
+              Pctf_method
+                ((fun (v_0, v_1, v_2, v_3) ->
+                    __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                    __dt__.rewrite_private_flag __dt__ __inh__ v_1,
+                    __dt__.rewrite_virtual_flag __dt__ __inh__ v_2,
+                    __dt__.rewrite_core_type __dt__ __inh__ v_3) v_0)
+
         }
       ; rewrite_class_infos = {
           srctype = [%typ: 'a class_infos]
@@ -578,7 +656,7 @@ Pcty_arrow (v_0, v_1, v_2) ->
               Pcl_fun (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Pcl_fun
-                (rewrite_402_label_404_arg_label __dt__ __inh__ v_0,
+                (rewrite_402_label_406_arg_label __dt__ __inh__ v_0,
                  Option.map (__dt__.rewrite_expression __dt__ __inh__)  v_1,
                  __dt__.rewrite_pattern __dt__ __inh__ v_2,
                  __dt__.rewrite_class_expr __dt__ __inh__ v_3)
@@ -587,7 +665,7 @@ Pcty_arrow (v_0, v_1, v_2) ->
               Pcl_apply
                 (__dt__.rewrite_class_expr __dt__ __inh__ v_0,
                  List.map (fun (v_0, v_1) ->
-                     rewrite_402_label_404_arg_label __dt__ __inh__ v_0,
+                     rewrite_402_label_406_arg_label __dt__ __inh__ v_0,
                      __dt__.rewrite_expression __dt__ __inh__ v_1)
                    v_1)
         }
@@ -603,6 +681,13 @@ Pcty_arrow (v_0, v_1, v_2) ->
       ; rewrite_class_field_desc = {
           srctype = [%typ: class_field_desc]
         ; dsttype = [%typ: DST.Parsetree.class_field_desc]
+        ; custom_branches_code = function
+              Pcf_inherit (v_0, v_1, v_2) ->
+              let open DST.Parsetree in
+              Pcf_inherit
+                (__dt__.rewrite_override_flag __dt__ __inh__ v_0,
+                 __dt__.rewrite_class_expr __dt__ __inh__ v_1,
+                 Option.map (fun v -> __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v)) v_2)
         }
       ; rewrite_class_field_kind = {
           srctype = [%typ: class_field_kind]
@@ -676,6 +761,21 @@ Pcty_arrow (v_0, v_1, v_2) ->
       ; rewrite_with_constraint = {
           srctype = [%typ: with_constraint]
         ; dsttype = [%typ: DST.Parsetree.with_constraint]
+        ; custom_branches_code = function
+            | Pwith_typesubst x0 ->
+              let lid_loc = map_loc (fun x -> Lident x) x0.ptype_name in 
+              let open DST.Parsetree in
+              Pwith_typesubst
+                (__dt__.rewrite_longident_Location_loc __dt__ __inh__ lid_loc,
+                 __dt__.rewrite_type_declaration __dt__ __inh__ x0)
+
+            | Pwith_modsubst (v_0, v_1) ->
+              let lid_loc = map_loc (fun x -> Lident x) v_0 in 
+              let open DST.Parsetree in
+              Pwith_modsubst
+                (__dt__.rewrite_longident_Location_loc __dt__ __inh__ lid_loc,
+                 __dt__.rewrite_longident_Location_loc __dt__ __inh__ v_1)
+
         }
       ; rewrite_module_expr = {
           srctype = [%typ: module_expr]
@@ -736,6 +836,10 @@ Pcty_arrow (v_0, v_1, v_2) ->
       ; rewrite_out_value = {
           srctype = [%typ: out_value]
         ; dsttype = [%typ: DST.Outcometree.out_value]
+        ; custom_branches_code = function
+            | Oval_string v_0 ->
+              let open DST.Outcometree in
+              Oval_string (v_0, max_int, Ostr_string)
         }
       ; rewrite_out_type = {
           srctype = [%typ: out_type]
@@ -744,6 +848,13 @@ Pcty_arrow (v_0, v_1, v_2) ->
       ; rewrite_out_variant = {
           srctype = [%typ: out_variant]
         ; dsttype = [%typ: DST.Outcometree.out_variant]
+        ; custom_branches_code = function
+            | Ovar_name (v_0, v_1) ->
+              let open DST.Outcometree in
+              Ovar_typ
+                (Otyp_constr
+                   (__dt__.rewrite_out_ident __dt__ __inh__ v_0,
+                    List.map (__dt__.rewrite_out_type __dt__ __inh__) v_1))
         }
       ; rewrite_out_class_type = {
           srctype = [%typ: out_class_type]
