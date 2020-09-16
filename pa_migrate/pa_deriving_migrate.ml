@@ -19,6 +19,30 @@ open Pa_ppx_utils ;
 
 value debug = Pa_passthru.debug ;
 
+value string_list_of_expr e =
+  let rec lrec = fun [
+    <:expr< $uid:uid$ >> -> [uid]
+  | <:expr< $e1$ . $e2$ >> -> (lrec e1)@(lrec e2)
+  | e -> Ploc.raise (loc_of_expr e) (Failure "string_list_of_expr: unexpected expr")
+  ] in
+  lrec e
+;
+value longid_of_expr e =
+  let l = string_list_of_expr e in
+  Asttools.longident_of_string_list (loc_of_expr e) l
+;
+
+value convert_list_expr e =
+  let rec crec acc = fun [
+    <:expr< [] >> -> List.rev acc
+  | <:expr< [ $h$ :: $tl$ ] >> ->
+    crec [ h :: acc ] tl
+  | _ -> Ploc.raise (loc_of_expr e) (Failure Fmt.(str "convert_list_expr: malformed list-expression %a"
+                                                    Pp_MLast.pp_expr e))
+  ] in
+  crec [] e
+;
+
 module Dispatch1 = struct
 type tyarg_t = {
   name: string
@@ -62,26 +86,12 @@ value convert_subs loc e =
   crec [] e
 ;
 
-value string_list_of_expr e =
-  let rec lrec = fun [
-    <:expr< $uid:uid$ >> -> [uid]
-  | <:expr< $e1$ . $e2$ >> -> (lrec e1)@(lrec e2)
-  | e -> Ploc.raise (loc_of_expr e) (Failure "string_list_of_expr: unexpected expr")
-  ] in
-  lrec e
-;
-value longid_of_expr e =
-  let l = string_list_of_expr e in
-  Asttools.longident_of_string_list (loc_of_expr e) l
-;
-
 value convert_field_name_list loc e =
-  let rec crec acc = fun [
-    <:expr< [] >> -> List.rev acc
-  | <:expr< [ $lid:f$ :: $tl$ ] >> ->
-    crec [ f :: acc ] tl
-  ] in
-  crec [] e
+  let el = convert_list_expr e in
+  List.map (fun [ <:expr< $lid:f$ >> -> f
+                | _ -> Ploc.raise (loc_of_expr e) (Failure Fmt.(str "convert_field_name_list: malformed list %a"
+                                                                  Pp_MLast.pp_expr e))
+                ]) el
 ;
 
 value convert_tyarg loc type_decls name tyargs =
@@ -293,6 +303,74 @@ value dispatch_table_expr loc t =
   <:expr< { $list:lel$ } >>
 ;
 
+value must_subst_lid (srclid, dstlid) li =
+  let rec srec li =
+    if Reloc.eq_longid srclid li then
+      dstlid
+    else match li with [
+      <:extended_longident:< $longid:li$ . $uid:uid$ >> -> <:longident< $longid:srec li$ . $uid:uid$ >>
+    | <:extended_longident:< $longid:_$ ( $longid:_$ ) >> ->
+        Ploc.raise loc (Failure Fmt.(str "must_subst_lid: unexpected -extended- longid seen: %a"
+                                       Pp_MLast.pp_longid li))
+    | _ -> li
+    ]
+  in srec li
+;
+
+value generate_dsttype loc (srclid, dstlid) td =
+  let ty = match td.tdDef with [
+    <:ctyp< $t1$ == $_$ >> -> t1
+  | _ ->
+    let tname = td.tdNam |> uv |> snd |> uv in
+    let loc = loc_of_ctyp td.tdDef in
+    <:ctyp< $longid:srclid$ . $lid:tname$ >>
+  ] in
+  match ty with [
+    <:ctyp:< $longid:li$ . $lid:lid$ >> ->
+    let li = must_subst_lid (srclid, dstlid) li in
+    <:ctyp< $longid:li$ . $lid:lid$ >>
+  | _ -> Ploc.raise (loc_of_ctyp ty) (Failure Fmt.(str "generate_dsttype: the manifest type must be module-qualified: %a"
+                                                     Pp_MLast.pp_ctyp ty))
+  ]
+;
+
+value build_default_dispatchers loc type_decls e =
+  let alist = match e with [
+    <:expr:< { $list:lel$ } >> ->
+      List.map (fun [
+          (<:patt< $lid:id$ >>, e) -> (id, e)
+        | _ -> Ploc.raise loc (Failure "bad default_dispatchers label -- must be lident")
+        ]) lel
+  | _ -> Ploc.raise loc (Failure Fmt.(str "build_default_dispatchers: bad arg %a"
+                                        Pp_MLast.pp_expr e))
+  ] in
+  let srcmod = match List.assoc "srcmod" alist with [
+    e -> longid_of_expr e
+  | exception Not_found -> Ploc.raise loc (Failure "build_default_dispatchers: no srcmod specified")
+  ] in
+  let dstmod = match List.assoc "dstmod" alist with [
+    e -> longid_of_expr e
+  | exception Not_found -> Ploc.raise loc (Failure "build_default_dispatchers: no dstmod specified")
+  ] in
+  let types = match List.assoc "types" alist with [
+    <:expr:< [ $_$ :: $_$ ] >> as e ->
+    Dispatch1.convert_field_name_list loc e
+  | _ -> Ploc.raise loc (Failure "build_default_dispatchers: malformed types field")
+  | exception Not_found -> Ploc.raise loc (Failure "build_default_dispatchers: no types specified")
+  ] in
+  List.map (fun tyid ->
+    match List.assoc tyid type_decls with [
+      td ->
+      let dsttype = generate_dsttype (loc_of_type_decl td) (srcmod, dstmod) td in
+      let rwname = Printf.sprintf "rewrite_%s" tyid in
+      Dispatch1.convert loc type_decls
+        (rwname,
+         [(<:patt< srctype >>, <:expr< [%typ: $lid:tyid$] >>)
+         ; (<:patt< dsttype >>, <:expr< [%typ: $type:dsttype$] >>)])
+      | exception Not_found -> Ploc.raise loc (Failure Fmt.(str "build_default_dispatchers: type %s not declared" tyid))
+    ]) types
+;
+
 value build_context loc ctxt tdl =
   let type_decls = List.map (fun (MLast.{tdNam=tdNam} as td) ->
       (tdNam |> uv |> snd |> uv, td)
@@ -318,7 +396,17 @@ value build_context loc ctxt tdl =
           (Dispatch1.convert loc type_decls (fname, tyargs))
         | _ -> Ploc.raise loc (Failure "pa_deriving.migrate: malformed dispatcher args")
       ]) lel
+  | _ -> Ploc.raise loc (Failure "pa_deriving.migrate: malformed dispatchers option")
   ] in
+  let default_dispatchers = match option ctxt "default_dispatchers" with [
+    <:expr< [ $_$ :: $_$ ] >> as e ->
+    let el = convert_list_expr e in
+    let dll = List.map (build_default_dispatchers loc type_decls) el in
+    List.concat dll
+  ] in
+  let dispatchers = List.sort
+      (fun (n1,_) (n2,_) -> Stdlib.compare n1 n2)
+      (dispatchers@default_dispatchers) in
   let pretty_rewrites = Prettify.mk_from_type_decls type_decls in
   {
     inherit_type = inherit_type ;
@@ -599,7 +687,7 @@ value str_item_gen_migrate name arg = fun [
 Pa_deriving.(Registry.add PI.{
   name = "migrate"
 ; alternates = []
-; options = ["optional"; "dispatchers"; "dispatch_type"; "dispatch_table_value"; "inherit_type"]
+; options = ["optional"; "default_dispatchers"; "dispatchers"; "dispatch_type"; "dispatch_table_value"; "inherit_type"]
 ; default_options = let loc = Ploc.dummy in [ ("optional", <:expr< False >>) ]
 ; alg_attributes = ["nobuiltin"]
 ; expr_extensions = []
