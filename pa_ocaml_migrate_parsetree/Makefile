@@ -16,11 +16,12 @@ PACKAGES := $(PACKAGES),pa_ppx.base,fmt,bos,pa_ppx.import
 PACKAGES := $(PACKAGES),pa_ppx_migrate
 SYNTAX = camlp5o
 OCAMLCFLAGS += -ppopt -pa_import-I -ppopt .
-#OCAMLCFLAGS += -ppopt -pa_passthru-debug 
+OCAMLCFLAGS += -ppopt -pa_passthru-debug 
 
 TARGET=pa_omp.cma
 ML=all_ast.ml \
 	rewrite_402_403.ml rewrite_403_402.ml \
+	rewrite_402_404.ml rewrite_404_402.ml \
 	rewrite_403_404.ml rewrite_404_403.ml \
 	rewrite_404_405.ml rewrite_405_404.ml \
 	rewrite_405_406.ml rewrite_406_405.ml \
