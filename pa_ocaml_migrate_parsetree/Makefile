@@ -22,6 +22,7 @@ TARGET=pa_omp.cma
 ML=all_ast.ml \
 	rewrite_402_403.ml rewrite_403_402.ml \
 	rewrite_402_404.ml rewrite_404_402.ml \
+	rewrite_402_405.ml rewrite_405_402.ml \
 	rewrite_403_404.ml rewrite_404_403.ml \
 	rewrite_404_405.ml rewrite_405_404.ml \
 	rewrite_405_406.ml rewrite_406_405.ml \
