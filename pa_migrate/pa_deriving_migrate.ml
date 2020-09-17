@@ -352,21 +352,40 @@ value build_default_dispatchers loc type_decls e =
     e -> longid_of_expr e
   | exception Not_found -> Ploc.raise loc (Failure "build_default_dispatchers: no dstmod specified")
   ] in
+  let inherit_code = match List.assoc "inherit_code" alist with [
+    <:expr:< { $list:lel$ } >> as z ->
+    List.map (fun [
+        (<:patt< $lid:tyna$ >>, e) -> (tyna, e)
+      | _ -> Ploc.raise loc (Failure Fmt.(str "build_default_dispatchers: malformed inherit_code %a"
+                                            Pp_MLast.pp_expr z))
+      ]) lel
+    | exception Not_found -> []
+  ] in
   let types = match List.assoc "types" alist with [
     <:expr:< [ $_$ :: $_$ ] >> as e ->
     Dispatch1.convert_field_name_list loc e
   | _ -> Ploc.raise loc (Failure "build_default_dispatchers: malformed types field")
   | exception Not_found -> Ploc.raise loc (Failure "build_default_dispatchers: no types specified")
   ] in
+  if not (Std.subset (List.map fst inherit_code) types) then
+    let extras = Std.subtract (List.map fst inherit_code) types in
+    Ploc.raise loc (Failure Fmt.(str "build_default_dispatchers: extra members of inherit_code: %a"
+                                   (list ~{sep=sp} string) extras))
+  else
   List.map (fun tyid ->
     match List.assoc tyid type_decls with [
       td ->
       let dsttype = generate_dsttype (loc_of_type_decl td) (srcmod, dstmod) td in
       let rwname = Printf.sprintf "rewrite_%s" tyid in
+      let extras = match List.assoc tyid inherit_code with [
+        e -> [ (<:patt< inherit_code>>, e) ]
+        | exception Not_found -> []
+      ] in
       Dispatch1.convert loc type_decls
         (rwname,
          [(<:patt< srctype >>, <:expr< [%typ: $lid:tyid$] >>)
-         ; (<:patt< dsttype >>, <:expr< [%typ: $type:dsttype$] >>)])
+         ; (<:patt< dsttype >>, <:expr< [%typ: $type:dsttype$] >>)]
+         @extras)
       | exception Not_found -> Ploc.raise loc (Failure Fmt.(str "build_default_dispatchers: type %s not declared" tyid))
     ]) types
 ;

@@ -375,18 +375,18 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
     ; dispatch_table_value = dt
     ; default_dispatchers = [
         {
-          srcmod = All_ast.Ast_4_09 ;
-          dstmod = DST ;
-          types = [
+          srcmod = All_ast.Ast_4_09
+        ; dstmod = DST
+        ; types = [
             lexing_position
           ; location_t
           ; longident_t
           ]
         }
       ; {
-        srcmod = All_ast.Ast_4_09.Asttypes ;
-        dstmod = DST.Asttypes ;
-        types = [
+        srcmod = All_ast.Ast_4_09.Asttypes
+      ; dstmod = DST.Asttypes
+      ; types = [
           arg_label
         ; closed_flag
         ; direction_flag
@@ -400,51 +400,90 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
         ]
       }
       ; {
-        srcmod = All_ast.Ast_4_09.Parsetree ;
-        dstmod = DST.Parsetree ;
-        types = [
+        srcmod = All_ast.Ast_4_09.Parsetree
+      ; dstmod = DST.Parsetree
+      ; types = [
           attribute
         ; attributes
         ; binding_op
         ; case
         ; class_declaration
         ; class_description
+        ; class_expr
         ; class_expr_desc
+        ; class_field
         ; class_field_desc
         ; class_field_kind
         ; class_signature
         ; class_structure
+        ; class_type
         ; class_type_declaration
         ; class_type_desc
+        ; class_type_field
         ; class_type_field_desc
         ; constant
         ; constructor_arguments
+        ; constructor_declaration
+        ; core_type
         ; core_type_desc
+        ; expression
         ; extension
+        ; extension_constructor
         ; extension_constructor_kind
         ; include_declaration
         ; include_description
+        ; label_declaration
         ; letop
         ; location_stack
+        ; module_expr
+        ; module_substitution
+        ; module_type
+        ; module_type_declaration
         ; object_field
         ; object_field_desc
+        ; open_declaration
+        ; open_description
         ; package_type
+        ; pattern
         ; payload
         ; row_field
         ; row_field_desc
         ; signature
+        ; signature_item
         ; signature_item_desc
         ; structure
+        ; structure_item
         ; structure_item_desc
+        ; type_declaration
+        ; type_exception
         ; type_extension
         ; type_kind
+        ; value_binding
+        ; value_description
         ; with_constraint
         ]
+      ; inherit_code = {
+          class_expr = Some pcl_loc
+        ; class_field = Some pcf_loc
+        ; class_type_field = Some pctf_loc
+        ; class_type = Some pcty_loc
+        ; constructor_declaration = Some pcd_loc
+        ; extension_constructor = Some pext_loc
+        ; label_declaration = Some pld_loc
+        ; module_expr = Some pmod_loc
+        ; module_type_declaration = Some pmtd_loc
+        ; module_type = Some pmty_loc
+        ; signature_item = Some psig_loc
+        ; structure_item = Some pstr_loc
+        ; type_declaration = Some ptype_loc
+        ; value_binding = Some pvb_loc
+        ; value_description = Some pval_loc
+        }
       }
       ; {
-        srcmod = All_ast.Ast_4_09.Outcometree ;
-        dstmod = DST.Outcometree ;
-        types = [
+        srcmod = All_ast.Ast_4_09.Outcometree
+      ; dstmod = DST.Outcometree
+      ; types = [
           out_attribute
         ; out_class_sig_item
         ; out_class_type
@@ -497,16 +536,6 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
         ; code = _rewrite_list
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
-      ; rewrite_core_type = {
-          srctype = [%typ: core_type]
-        ; dsttype = [%typ: DST.Parsetree.core_type]
-        ; inherit_code = Some ptyp_loc
-        }
-      ; rewrite_pattern = {
-          srctype = [%typ: pattern]
-        ; dsttype = [%typ: DST.Parsetree.pattern]
-        ; inherit_code = Some ppat_loc
-        }
       ; rewrite_pattern_desc = {
           srctype = [%typ: pattern_desc]
         ; dsttype = [%typ: DST.Parsetree.pattern_desc]
@@ -516,11 +545,6 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
               let open DST.Parsetree in
               Ppat_unpack
                 (__dt__.rewrite_string_option_Location_loc __dt__ __inh__ v_0)
-        }
-      ; rewrite_expression = {
-          srctype = [%typ: expression]
-        ; dsttype = [%typ: DST.Parsetree.expression]
-        ; inherit_code = Some pexp_loc
         }
       ; rewrite_expression_desc = {
           srctype = [%typ: expression_desc]
@@ -534,66 +558,11 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
                  __dt__.rewrite_module_expr __dt__ __inh__ v_1,
                  __dt__.rewrite_expression __dt__ __inh__ v_2)
         }
-      ; rewrite_value_description = {
-          srctype = [%typ: value_description]
-        ; dsttype = [%typ: DST.Parsetree.value_description]
-        ; inherit_code = Some pval_loc
-        }
-      ; rewrite_type_declaration = {
-          srctype = [%typ: type_declaration]
-        ; dsttype = [%typ: DST.Parsetree.type_declaration]
-        ; inherit_code = Some ptype_loc
-        }
-      ; rewrite_label_declaration = {
-          srctype = [%typ: label_declaration]
-        ; dsttype = [%typ: DST.Parsetree.label_declaration]
-        ; inherit_code = Some pld_loc
-        }
-      ; rewrite_constructor_declaration = {
-          srctype = [%typ: constructor_declaration]
-        ; dsttype = [%typ: DST.Parsetree.constructor_declaration]
-        ; inherit_code = Some pcd_loc
-        }
-      ; rewrite_extension_constructor = {
-          srctype = [%typ: extension_constructor]
-        ; dsttype = [%typ: DST.Parsetree.extension_constructor]
-        ; inherit_code = Some pext_loc
-        }
-      ; rewrite_type_exception = {
-          srctype = [%typ: type_exception]
-        ; dsttype = [%typ: DST.Parsetree.type_exception]
-        ; inherit_code = Some ptyexn_loc
-        }
-      ; rewrite_class_type = {
-          srctype = [%typ: class_type]
-        ; dsttype = [%typ: DST.Parsetree.class_type]
-        ; inherit_code = Some pcty_loc
-        }
-      ; rewrite_class_type_field = {
-          srctype = [%typ: class_type_field]
-        ; dsttype = [%typ: DST.Parsetree.class_type_field]
-        ; inherit_code = Some pctf_loc
-        }
       ; rewrite_class_infos = {
           srctype = [%typ: 'a class_infos]
         ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
         ; inherit_code = Some pci_loc
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
-      ; rewrite_class_expr = {
-          srctype = [%typ: class_expr]
-        ; dsttype = [%typ: DST.Parsetree.class_expr]
-        ; inherit_code = Some pcl_loc
-        }
-      ; rewrite_class_field = {
-          srctype = [%typ: class_field]
-        ; dsttype = [%typ: DST.Parsetree.class_field]
-        ; inherit_code = Some pcf_loc
-        }
-      ; rewrite_module_type = {
-          srctype = [%typ: module_type]
-        ; dsttype = [%typ: DST.Parsetree.module_type]
-        ; inherit_code = Some pmty_loc
         }
       ; rewrite_module_type_desc = {
           srctype = [%typ: module_type_desc]
@@ -610,11 +579,6 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
                          __dt__.rewrite_module_type __dt__ __inh__ mty)),
                  __dt__.rewrite_module_type __dt__ __inh__ v_2)
         }
-      ; rewrite_signature_item = {
-          srctype = [%typ: signature_item]
-        ; dsttype = [%typ: DST.Parsetree.signature_item]
-        ; inherit_code = Some psig_loc
-        }
       ; rewrite_module_declaration = {
           srctype = [%typ: module_declaration]
         ; dsttype = [%typ: DST.Parsetree.module_declaration]
@@ -626,36 +590,11 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
               __dt__.rewrite_string_option_Location_loc __dt__ __inh__ pmd_name
           }
         }
-      ; rewrite_module_substitution = {
-          srctype = [%typ: module_substitution]
-        ; dsttype = [%typ: DST.Parsetree.module_substitution]
-        ; inherit_code = Some pms_loc
-        }
-      ; rewrite_module_type_declaration = {
-          srctype = [%typ: module_type_declaration]
-        ; dsttype = [%typ: DST.Parsetree.module_type_declaration]
-        ; inherit_code = Some pmtd_loc
-        }
-      ; rewrite_open_description = {
-          srctype = [%typ: open_description]
-        ; dsttype = [%typ: DST.Parsetree.open_description]
-        ; inherit_code = Some popen_loc
-        }
-      ; rewrite_open_declaration = {
-          srctype = [%typ: open_declaration]
-        ; dsttype = [%typ: DST.Parsetree.open_declaration]
-        ; inherit_code = Some popen_loc
-        }
       ; rewrite_include_infos = {
           srctype = [%typ: 'a include_infos]
         ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
         ; inherit_code = Some pincl_loc
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
-      ; rewrite_module_expr = {
-          srctype = [%typ: module_expr]
-        ; dsttype = [%typ: DST.Parsetree.module_expr]
-        ; inherit_code = Some pmod_loc
         }
       ; rewrite_module_expr_desc = {
           srctype = [%typ: module_expr_desc]
@@ -671,16 +610,6 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
                       Named(__dt__.rewrite_string_option_Location_loc __dt__ __inh__ v_0,
                             __dt__.rewrite_module_type __dt__ __inh__ mty)),
                  __dt__.rewrite_module_expr __dt__ __inh__ v_2)
-        }
-      ; rewrite_structure_item = {
-          srctype = [%typ: structure_item]
-        ; dsttype = [%typ: DST.Parsetree.structure_item]
-        ; inherit_code = Some pstr_loc
-        }
-      ; rewrite_value_binding = {
-          srctype = [%typ: value_binding]
-        ; dsttype = [%typ: DST.Parsetree.value_binding]
-        ; inherit_code = Some pvb_loc
         }
       ; rewrite_module_binding = {
           srctype = [%typ: module_binding]
