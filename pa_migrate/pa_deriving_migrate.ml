@@ -403,10 +403,17 @@ value build_context loc ctxt tdl =
     let el = convert_list_expr e in
     let dll = List.map (build_default_dispatchers loc type_decls) el in
     List.concat dll
+  | exception Failure _ -> []
   ] in
   let dispatchers = List.sort
       (fun (n1,_) (n2,_) -> Stdlib.compare n1 n2)
       (dispatchers@default_dispatchers) in
+  let repeated_dispatcher_names = Std2.hash_list_repeats (List.map fst dispatchers) in
+  let sorted_repeated_dispatcher_names = List.sort Stdlib.compare repeated_dispatcher_names in
+  if [] <> repeated_dispatcher_names then
+    Ploc.raise loc (Failure Fmt.(str "pa_deriving.migrate: dispatchers defined more than once: %a"
+                                   (list ~{sep=sp} string) sorted_repeated_dispatcher_names))
+  else
   let pretty_rewrites = Prettify.mk_from_type_decls type_decls in
   {
     inherit_type = inherit_type ;
