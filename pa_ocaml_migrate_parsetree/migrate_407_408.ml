@@ -42,7 +42,7 @@ exception Migration_error of string * SRC.Location.t option
 let migration_error location feature =
   raise (Migration_error (feature, location))
 
-let _rewrite_list subrw0 __dt__ __inh__ l =
+let _migrate_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
 
 type lexing_position = [%import: All_ast.Ast_4_07.Lexing.position]
@@ -454,30 +454,30 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
       }
       ]
     ; dispatchers = {
-        rewrite_option = {
+        migrate_option = {
           srctype = [%typ: 'a option]
         ; dsttype = [%typ: 'b option]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_list = {
+      ; migrate_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
-        ; code = _rewrite_list
+        ; code = _migrate_list
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
-      ; rewrite_attribute = {
+      ; migrate_attribute = {
           srctype = [%typ: attribute]
         ; dsttype = [%typ: DST.Parsetree.attribute]
         ; code = fun __dt__ __inh__ (v_0, v_1) ->
             let open DST.Parsetree in
-            let name = __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0 in
-            let pay = __dt__.rewrite_payload __dt__ __inh__ v_1 in
+            let name = __dt__.migrate_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0 in
+            let pay = __dt__.migrate_payload __dt__ __inh__ v_1 in
             { attr_name = name;
               attr_payload = pay;
               attr_loc = name.loc }
         }
-      ; rewrite_core_type = {
+      ; migrate_core_type = {
           srctype = [%typ: core_type]
         ; dsttype = [%typ: DST.Parsetree.core_type]
         ; inherit_code = Some ptyp_loc
@@ -485,44 +485,44 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
             ptyp_loc_stack = []
           }
         }
-      ; rewrite_row_field = {
+      ; migrate_row_field = {
           srctype = [%typ: row_field]
         ; dsttype = [%typ: DST.Parsetree.row_field]
         ; custom_branches_code = function
               Rtag (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ v_0 in
+              let ll = __dt__.migrate_location_loc __dt__.migrate_label __dt__ __inh__ v_0 in
               { prf_desc = Rtag
                     (ll,
                      v_2,
-                     List.map (__dt__.rewrite_core_type __dt__ __inh__)  v_3);
+                     List.map (__dt__.migrate_core_type __dt__ __inh__)  v_3);
                 prf_loc = ll.loc;
-                prf_attributes = __dt__.rewrite_attributes __dt__ __inh__ v_1
+                prf_attributes = __dt__.migrate_attributes __dt__ __inh__ v_1
               }
             | Rinherit v_0 ->
               let open DST.Parsetree in
-              { prf_desc = Rinherit (__dt__.rewrite_core_type __dt__ __inh__ v_0);
+              { prf_desc = Rinherit (__dt__.migrate_core_type __dt__ __inh__ v_0);
                 prf_loc = dst_loc_none;
                 prf_attributes = []
               }
         }
-      ; rewrite_object_field = {
+      ; migrate_object_field = {
           srctype = [%typ: object_field]
         ; dsttype = [%typ: DST.Parsetree.object_field]
         ; custom_branches_code = function
               Otag (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ v_0 in
-              { pof_desc = Otag (ll, __dt__.rewrite_core_type __dt__ __inh__ v_2);
+              let ll = __dt__.migrate_location_loc __dt__.migrate_label __dt__ __inh__ v_0 in
+              { pof_desc = Otag (ll, __dt__.migrate_core_type __dt__ __inh__ v_2);
                 pof_loc = ll.loc;
-                pof_attributes = __dt__.rewrite_attributes __dt__ __inh__ v_1 }
+                pof_attributes = __dt__.migrate_attributes __dt__ __inh__ v_1 }
             | Oinherit v_0 ->
               let open DST.Parsetree in
-              { pof_desc = Oinherit (__dt__.rewrite_core_type __dt__ __inh__ v_0);
+              { pof_desc = Oinherit (__dt__.migrate_core_type __dt__ __inh__ v_0);
                 pof_loc = dst_loc_none;
                 pof_attributes = [] }
         }
-      ; rewrite_pattern = {
+      ; migrate_pattern = {
           srctype = [%typ: pattern]
         ; dsttype = [%typ: DST.Parsetree.pattern]
         ; inherit_code = Some ppat_loc
@@ -530,7 +530,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
             ppat_loc_stack = []
           }
         }
-      ; rewrite_expression = {
+      ; migrate_expression = {
           srctype = [%typ: expression]
         ; dsttype = [%typ: DST.Parsetree.expression]
         ; inherit_code = Some pexp_loc
@@ -538,90 +538,90 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
             pexp_loc_stack = []
           }
         }
-      ; rewrite_expression_desc = {
+      ; migrate_expression_desc = {
           srctype = [%typ: expression_desc]
         ; dsttype = [%typ: DST.Parsetree.expression_desc]
         ; custom_branches_code = function
             | Pexp_open (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1 in
+              let ll = __dt__.migrate_location_loc __dt__.migrate_longident_t __dt__ __inh__ v_1 in
               Pexp_open
                 ({ popen_expr = { pmod_desc = Pmod_ident ll;
                                   pmod_loc = ll.loc ;
                                   pmod_attributes = [] };
-                   popen_override = __dt__.rewrite_override_flag __dt__ __inh__ v_0;
+                   popen_override = __dt__.migrate_override_flag __dt__ __inh__ v_0;
                    popen_loc = ll.loc ;
                    popen_attributes = [] },
-                 __dt__.rewrite_expression __dt__ __inh__ v_2)
+                 __dt__.migrate_expression __dt__ __inh__ v_2)
         }
-      ; rewrite_type_extension = {
+      ; migrate_type_extension = {
           srctype = [%typ: type_extension]
         ; dsttype = [%typ: DST.Parsetree.type_extension]
         ; custom_fields_code = {
-            ptyext_loc = __dt__.rewrite_location_t __dt__ __inh__ ptyext_path.SRC.Location.loc
+            ptyext_loc = __dt__.migrate_location_t __dt__ __inh__ ptyext_path.SRC.Location.loc
           }
         }
-      ; rewrite_class_type_desc = {
+      ; migrate_class_type_desc = {
           srctype = [%typ: class_type_desc]
         ; dsttype = [%typ: DST.Parsetree.class_type_desc]
         ; custom_branches_code = function
             | Pcty_open (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1 in
+              let ll = __dt__.migrate_location_loc __dt__.migrate_longident_t __dt__ __inh__ v_1 in
               Pcty_open
                 ({ popen_expr = ll;
-                   popen_override = __dt__.rewrite_override_flag __dt__ __inh__ v_0;
+                   popen_override = __dt__.migrate_override_flag __dt__ __inh__ v_0;
                    popen_loc = ll.loc;
                    popen_attributes = [] },
-                 __dt__.rewrite_class_type __dt__ __inh__ v_2)
+                 __dt__.migrate_class_type __dt__ __inh__ v_2)
         }
-      ; rewrite_class_expr_desc = {
+      ; migrate_class_expr_desc = {
           srctype = [%typ: class_expr_desc]
         ; dsttype = [%typ: DST.Parsetree.class_expr_desc]
         ; custom_branches_code = function
             | Pcl_open (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1 in
+              let ll = __dt__.migrate_location_loc __dt__.migrate_longident_t __dt__ __inh__ v_1 in
               Pcl_open
                 ({ popen_expr = ll;
-                   popen_override = __dt__.rewrite_override_flag __dt__ __inh__ v_0;
+                   popen_override = __dt__.migrate_override_flag __dt__ __inh__ v_0;
                    popen_loc = ll.loc;
                    popen_attributes = [] },
-                 __dt__.rewrite_class_expr __dt__ __inh__ v_2)
+                 __dt__.migrate_class_expr __dt__ __inh__ v_2)
         }
-      ; rewrite_signature_item_desc = {
+      ; migrate_signature_item_desc = {
           srctype = [%typ: signature_item_desc]
         ; dsttype = [%typ: DST.Parsetree.signature_item_desc]
         ; custom_branches_code = function
             | Psig_exception v_0 ->
               let open DST.Parsetree in
               Psig_exception
-                { ptyexn_constructor = __dt__.rewrite_extension_constructor __dt__ __inh__ v_0 ;
+                { ptyexn_constructor = __dt__.migrate_extension_constructor __dt__ __inh__ v_0 ;
                   ptyexn_loc = dst_loc_none ;
                   ptyexn_attributes = [] }
         }
-      ; rewrite_open_description = {
+      ; migrate_open_description = {
           srctype = [%typ: open_description]
         ; dsttype = [%typ: DST.Parsetree.open_description]
         ; inherit_code = Some popen_loc
         ; skip_fields = [ popen_lid ]
         ; custom_fields_code = {
-            popen_expr = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ popen_lid
+            popen_expr = __dt__.migrate_location_loc __dt__.migrate_longident_t __dt__ __inh__ popen_lid
           }
         }
-      ; rewrite_structure_item_desc = {
+      ; migrate_structure_item_desc = {
           srctype = [%typ: structure_item_desc]
         ; dsttype = [%typ: DST.Parsetree.structure_item_desc]
         ; custom_branches_code = function
             | Pstr_exception v_0 ->
               let open DST.Parsetree in
               Pstr_exception
-                { ptyexn_constructor = __dt__.rewrite_extension_constructor __dt__ __inh__ v_0 ;
+                { ptyexn_constructor = __dt__.migrate_extension_constructor __dt__ __inh__ v_0 ;
                   ptyexn_loc = dst_loc_none ;
                   ptyexn_attributes = [] }
             | Pstr_open v_0 ->
               let open DST.Parsetree in
-              let odesc = __dt__.rewrite_open_description __dt__ __inh__ v_0 in
+              let odesc = __dt__.migrate_open_description __dt__ __inh__ v_0 in
               let ll = odesc.popen_expr in
               Pstr_open
                 { popen_expr = { pmod_desc = Pmod_ident ll;
@@ -631,17 +631,17 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
                   popen_loc = odesc.popen_loc ;
                   popen_attributes = odesc.popen_attributes }
         }
-      ; rewrite_printer = {
+      ; migrate_printer = {
           srctype = [%typ: (Format.formatter -> unit)]
         ; dsttype = [%typ: (Format.formatter -> unit)]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_exn = {
+      ; migrate_exn = {
           srctype = [%typ: exn]
         ; dsttype = [%typ: exn]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_out_ident = {
+      ; migrate_out_ident = {
           srctype = [%typ: out_ident]
         ; dsttype = [%typ: DST.Outcometree.out_ident]
         ; custom_branches_code = function
@@ -649,7 +649,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
               let open DST.Outcometree in
               Oide_ident { printed_name = v_0 }
         }
-      ; rewrite_out_type = {
+      ; migrate_out_type = {
           srctype = [%typ: out_type]
         ; dsttype = [%typ: DST.Outcometree.out_type]
         ; custom_branches_code = function
@@ -658,7 +658,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
               Otyp_module
                 (Oide_ident { printed_name = v_0 },
                  v_1,
-                 List.map (__dt__.rewrite_out_type __dt__ __inh__) v_2)
+                 List.map (__dt__.migrate_out_type __dt__ __inh__) v_2)
         }
       }
     }

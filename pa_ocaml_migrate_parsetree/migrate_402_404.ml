@@ -1,6 +1,6 @@
 
 module SRC = All_ast.Ast_4_02
-module DST = All_ast.Ast_4_06
+module DST = All_ast.Ast_4_04
 
 let src_loc_none =
   let open SRC.Lexing in
@@ -23,24 +23,24 @@ let dst_loc_none =
     pos_cnum = -1;
   } in
   { loc_start = loc; loc_end = loc; loc_ghost = true }
-
+ 
 let wrap_loc inh v =
   let loc = match inh with
       None -> src_loc_none
     | Some loc -> loc in
   let open SRC.Location in
   { txt = v ; loc = loc }
-
+ 
 let map_loc f v =
   let open SRC.Location in
   { txt = f v.txt ; loc = v.loc }
 
 let unwrap_loc v = v.SRC.Location.txt
 
-let _rewrite_list subrw0 __dt__ __inh__ l =
+let _migrate_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
 
-let rewrite_label_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Asttypes.arg_label =
+let migrate_label_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Asttypes.arg_label =
   fun __dt__ __inh__ x ->
     if x <> "" then
       if x.[0] = '?' then DST.Asttypes.Optional (String.sub x 1 (String.length x - 1))
@@ -48,7 +48,7 @@ let rewrite_label_arg_label : 'a -> 'b -> SRC.Asttypes.label -> DST.Asttypes.arg
     else
       DST.Asttypes.Nolabel
 
-let rewrite_Asttypes_constant_Parsetree_constant :
+let migrate_Asttypes_constant_Parsetree_constant :
   'a -> 'b -> SRC.Asttypes.constant -> DST.Parsetree.constant =
   fun __dt__ __inh__ -> function
   | SRC.Asttypes.Const_int x0 ->
@@ -373,6 +373,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; class_description
         ; class_expr
         ; class_field
+        ; class_field_desc
         ; class_field_kind
         ; class_infos
         ; class_signature
@@ -380,6 +381,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; class_type
         ; class_type_declaration
         ; class_type_field
+        ; class_type_field_desc
         ; core_type
         ; expression
         ; extension
@@ -401,6 +403,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; pattern
         ; pattern_desc
         ; payload
+        ; row_field
         ; signature
         ; signature_item
         ; structure
@@ -410,6 +413,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; type_kind
         ; value_binding
         ; value_description
+        ; with_constraint
         ]
       ; inherit_code = {
           class_expr = Some pcl_loc
@@ -450,181 +454,111 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; out_rec_status
         ; out_type
         ; out_type_extension
+        ; out_value
+        ; out_variant
         ]
       }
       ]
     ; dispatchers = {
-        rewrite_option = {
+        migrate_option = {
           srctype = [%typ: 'a option]
         ; dsttype = [%typ: 'b option]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_constant = {
+      ; migrate_constant = {
           srctype = [%typ: constant]
         ; dsttype = [%typ: DST.Parsetree.constant]
-        ; code = rewrite_Asttypes_constant_Parsetree_constant
+        ; code = migrate_Asttypes_constant_Parsetree_constant
         }
-      ; rewrite_list = {
+      ; migrate_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
-        ; code = _rewrite_list
+        ; code = _migrate_list
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
-      ; rewrite_core_type_desc = {
+      ; migrate_core_type_desc = {
           srctype = [%typ: core_type_desc]
         ; dsttype = [%typ: DST.Parsetree.core_type_desc]
         ; custom_branches_code = function
             Ptyp_arrow (v_0, v_1, v_2) ->
             let open DST.Parsetree in
             Ptyp_arrow
-              (rewrite_label_arg_label __dt__ __inh__ v_0,
-               __dt__.rewrite_core_type __dt__ __inh__ v_1,
-               __dt__.rewrite_core_type __dt__ __inh__ v_2)
-            | Ptyp_object (v_0, v_1) ->
-              let open DST.Parsetree in
-              Ptyp_object
-                (List.map (fun (v_0, v_1, v_2) ->
-                     Otag(__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
-                          __dt__.rewrite_attributes __dt__ __inh__ v_1,
-                          __dt__.rewrite_core_type __dt__ __inh__ v_2)) v_0,
-                 __dt__.rewrite_closed_flag __dt__ __inh__ v_1)
-                
-            | Ptyp_poly (v_0, v_1) ->
-              let open DST.Parsetree in
-              Ptyp_poly
-                (List.map (fun v_0 ->
-                  __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0)) v_0,
-                 __dt__.rewrite_core_type __dt__ __inh__ v_1)
+              (migrate_label_arg_label __dt__ __inh__ v_0,
+               __dt__.migrate_core_type __dt__ __inh__ v_1,
+               __dt__.migrate_core_type __dt__ __inh__ v_2)
         }
-      ; rewrite_row_field = {
-          srctype = [%typ: row_field]
-        ; dsttype = [%typ: DST.Parsetree.row_field]
-        ; custom_branches_code = function
-              Rtag (v_0, v_1, v_2, v_3) ->
-              let open DST.Parsetree in
-              Rtag
-                (__dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ (wrap_loc __inh__ v_0),
-                 __dt__.rewrite_attributes __dt__ __inh__ v_1,
-                 v_2,
-                 List.map (__dt__.rewrite_core_type __dt__ __inh__) v_3)
-        }
-      ; rewrite_expression_desc = {
+      ; migrate_expression_desc = {
           srctype = [%typ: expression_desc]
         ; dsttype = [%typ: DST.Parsetree.expression_desc]
         ; custom_branches_code = function
               Pexp_fun (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Pexp_fun
-                (rewrite_label_arg_label __dt__ __inh__ v_0,
-                 __dt__.rewrite_option __dt__.rewrite_expression __dt__ __inh__ v_1,
-                 __dt__.rewrite_pattern __dt__ __inh__ v_2,
-                 __dt__.rewrite_expression __dt__ __inh__ v_3)
+                (migrate_label_arg_label __dt__ __inh__ v_0,
+                 __dt__.migrate_option __dt__.migrate_expression __dt__ __inh__ v_1,
+                 __dt__.migrate_pattern __dt__ __inh__ v_2,
+                 __dt__.migrate_expression __dt__ __inh__ v_3)
             | Pexp_apply (v_0, v_1) ->
               let open DST.Parsetree in
               Pexp_apply
-                (__dt__.rewrite_expression __dt__ __inh__ v_0,
+                (__dt__.migrate_expression __dt__ __inh__ v_0,
                  List.map (fun (v_0, v_1) ->
-                     rewrite_label_arg_label __dt__ __inh__ v_0,
-                     __dt__.rewrite_expression __dt__ __inh__ v_1) v_1)
-            | Pexp_send (v_0, v_1) ->
-              let open DST.Parsetree in
-              Pexp_send
-                (__dt__.rewrite_expression __dt__ __inh__ v_0,
-                 __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_1))
-            | Pexp_newtype (v_0, v_1) ->
-              let open DST.Parsetree in
-              Pexp_newtype
-                (__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
-                 __dt__.rewrite_expression __dt__ __inh__ v_1)
+                     migrate_label_arg_label __dt__ __inh__ v_0,
+                     __dt__.migrate_expression __dt__ __inh__ v_1) v_1)
         }
-      ; rewrite_constructor_declaration = {
+      ; migrate_constructor_declaration = {
           srctype = [%typ: constructor_declaration]
         ; dsttype = [%typ: DST.Parsetree.constructor_declaration]
         ; inherit_code = Some pcd_loc
         ; skip_fields = [ pcd_args ]
         ; custom_fields_code = {
             pcd_args =
-              DST.Parsetree.Pcstr_tuple (List.map (__dt__.rewrite_core_type __dt__ __inh__) pcd_args)
+              DST.Parsetree.Pcstr_tuple (List.map (__dt__.migrate_core_type __dt__ __inh__) pcd_args)
           }
         }
-      ; rewrite_extension_constructor_kind = {
+      ; migrate_extension_constructor_kind = {
           srctype = [%typ: extension_constructor_kind]
         ; dsttype = [%typ: DST.Parsetree.extension_constructor_kind]
         ; custom_branches_code = function
     Pext_decl (v_0, v_1) ->
       let open DST.Parsetree in
       Pext_decl
-        (DST.Parsetree.Pcstr_tuple (List.map (__dt__.rewrite_core_type __dt__ __inh__) v_0),
-         Option.map (__dt__.rewrite_core_type __dt__ __inh__) v_1)
+        (DST.Parsetree.Pcstr_tuple (List.map (__dt__.migrate_core_type __dt__ __inh__) v_0),
+         Option.map (__dt__.migrate_core_type __dt__ __inh__) v_1)
         }
-      ; rewrite_class_type_desc = {
+      ; migrate_class_type_desc = {
           srctype = [%typ: class_type_desc]
         ; dsttype = [%typ: DST.Parsetree.class_type_desc]
         ; custom_branches_code = function
 Pcty_arrow (v_0, v_1, v_2) ->
       let open DST.Parsetree in
       Pcty_arrow
-        (rewrite_label_arg_label __dt__ __inh__ v_0,
-         __dt__.rewrite_core_type __dt__ __inh__ v_1,
-         __dt__.rewrite_class_type __dt__ __inh__ v_2)
+        (migrate_label_arg_label __dt__ __inh__ v_0,
+         __dt__.migrate_core_type __dt__ __inh__ v_1,
+         __dt__.migrate_class_type __dt__ __inh__ v_2)
         }
-      ; rewrite_class_type_field_desc = {
-          srctype = [%typ: class_type_field_desc]
-        ; dsttype = [%typ: DST.Parsetree.class_type_field_desc]
-        ; custom_branches_code = function
-            | Pctf_val v_0 ->
-              let open DST.Parsetree in
-              Pctf_val
-                ((fun (v_0, v_1, v_2, v_3) ->
-                    __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
-                    __dt__.rewrite_mutable_flag __dt__ __inh__ v_1,
-                    __dt__.rewrite_virtual_flag __dt__ __inh__ v_2,
-                    __dt__.rewrite_core_type __dt__ __inh__ v_3)
-                   v_0)
-
-            | Pctf_method v_0 ->
-              let open DST.Parsetree in
-              Pctf_method
-                ((fun (v_0, v_1, v_2, v_3) ->
-                    __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
-                    __dt__.rewrite_private_flag __dt__ __inh__ v_1,
-                    __dt__.rewrite_virtual_flag __dt__ __inh__ v_2,
-                    __dt__.rewrite_core_type __dt__ __inh__ v_3) v_0)
-
-        }
-      ; rewrite_class_expr_desc = {
+      ; migrate_class_expr_desc = {
           srctype = [%typ: class_expr_desc]
         ; dsttype = [%typ: DST.Parsetree.class_expr_desc]
         ; custom_branches_code = function
               Pcl_fun (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Pcl_fun
-                (rewrite_label_arg_label __dt__ __inh__ v_0,
-                 Option.map (__dt__.rewrite_expression __dt__ __inh__)  v_1,
-                 __dt__.rewrite_pattern __dt__ __inh__ v_2,
-                 __dt__.rewrite_class_expr __dt__ __inh__ v_3)
+                (migrate_label_arg_label __dt__ __inh__ v_0,
+                 Option.map (__dt__.migrate_expression __dt__ __inh__)  v_1,
+                 __dt__.migrate_pattern __dt__ __inh__ v_2,
+                 __dt__.migrate_class_expr __dt__ __inh__ v_3)
             | Pcl_apply (v_0, v_1) ->
               let open DST.Parsetree in
               Pcl_apply
-                (__dt__.rewrite_class_expr __dt__ __inh__ v_0,
+                (__dt__.migrate_class_expr __dt__ __inh__ v_0,
                  List.map (fun (v_0, v_1) ->
-                     rewrite_label_arg_label __dt__ __inh__ v_0,
-                     __dt__.rewrite_expression __dt__ __inh__ v_1)
+                     migrate_label_arg_label __dt__ __inh__ v_0,
+                     __dt__.migrate_expression __dt__ __inh__ v_1)
                    v_1)
         }
-      ; rewrite_class_field_desc = {
-          srctype = [%typ: class_field_desc]
-        ; dsttype = [%typ: DST.Parsetree.class_field_desc]
-        ; custom_branches_code = function
-              Pcf_inherit (v_0, v_1, v_2) ->
-              let open DST.Parsetree in
-              Pcf_inherit
-                (__dt__.rewrite_override_flag __dt__ __inh__ v_0,
-                 __dt__.rewrite_class_expr __dt__ __inh__ v_1,
-                 Option.map (fun v -> __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v)) v_2)
-        }
-      ; rewrite_signature_item_desc = {
+      ; migrate_signature_item_desc = {
           srctype = [%typ: signature_item_desc]
         ; dsttype = [%typ: DST.Parsetree.signature_item_desc]
         ; custom_branches_code = function
@@ -636,28 +570,9 @@ Pcty_arrow (v_0, v_1, v_2) ->
                 else DST.Asttypes.Recursive in
               let open DST.Parsetree in
               Psig_type
-                (rf, List.map (__dt__.rewrite_type_declaration __dt__ __inh__) v_0)
+                (rf, List.map (__dt__.migrate_type_declaration __dt__ __inh__) v_0)
         }
-      ; rewrite_with_constraint = {
-          srctype = [%typ: with_constraint]
-        ; dsttype = [%typ: DST.Parsetree.with_constraint]
-        ; custom_branches_code = function
-            | Pwith_typesubst x0 ->
-              let lid_loc = map_loc (fun x -> Lident x) x0.ptype_name in 
-              let open DST.Parsetree in
-              Pwith_typesubst
-                (__dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ lid_loc,
-                 __dt__.rewrite_type_declaration __dt__ __inh__ x0)
-
-            | Pwith_modsubst (v_0, v_1) ->
-              let lid_loc = map_loc (fun x -> Lident x) v_0 in 
-              let open DST.Parsetree in
-              Pwith_modsubst
-                (__dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ lid_loc,
-                 __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1)
-
-        }
-      ; rewrite_structure_item_desc = {
+      ; migrate_structure_item_desc = {
           srctype = [%typ: structure_item_desc]
         ; dsttype = [%typ: DST.Parsetree.structure_item_desc]
         ; custom_branches_code = function
@@ -669,38 +584,19 @@ Pcty_arrow (v_0, v_1, v_2) ->
                 else DST.Asttypes.Recursive in
               let open DST.Parsetree in
               Pstr_type
-                (rf, List.map (__dt__.rewrite_type_declaration __dt__ __inh__) v_0)
+                (rf, List.map (__dt__.migrate_type_declaration __dt__ __inh__) v_0)
         }
-      ; rewrite_printer = {
+      ; migrate_printer = {
           srctype = [%typ: (Format.formatter -> unit)]
         ; dsttype = [%typ: (Format.formatter -> unit)]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_exn = {
+      ; migrate_exn = {
           srctype = [%typ: exn]
         ; dsttype = [%typ: exn]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_out_value = {
-          srctype = [%typ: out_value]
-        ; dsttype = [%typ: DST.Outcometree.out_value]
-        ; custom_branches_code = function
-            | Oval_string v_0 ->
-              let open DST.Outcometree in
-              Oval_string (v_0, max_int, Ostr_string)
-        }
-      ; rewrite_out_variant = {
-          srctype = [%typ: out_variant]
-        ; dsttype = [%typ: DST.Outcometree.out_variant]
-        ; custom_branches_code = function
-            | Ovar_name (v_0, v_1) ->
-              let open DST.Outcometree in
-              Ovar_typ
-                (Otyp_constr
-                   (__dt__.rewrite_out_ident __dt__ __inh__ v_0,
-                    List.map (__dt__.rewrite_out_type __dt__ __inh__) v_1))
-        }
-      ; rewrite_out_sig_item = {
+      ; migrate_out_sig_item = {
           srctype = [%typ: out_sig_item]
         ; dsttype = [%typ: DST.Outcometree.out_sig_item]
         ; custom_branches_code = function
@@ -708,11 +604,11 @@ Pcty_arrow (v_0, v_1, v_2) ->
               let open DST.Outcometree in
               Osig_value
                 {oval_name = v_0
-                ; oval_type = __dt__.rewrite_out_type __dt__ __inh__ v_1
+                ; oval_type = __dt__.migrate_out_type __dt__ __inh__ v_1
                 ; oval_prims = v_2
                 ; oval_attributes = []}
         }
-      ; rewrite_out_type_decl = {
+      ; migrate_out_type_decl = {
           srctype = [%typ: out_type_decl]
         ; dsttype = [%typ: DST.Outcometree.out_type_decl]
         ; custom_fields_code = {

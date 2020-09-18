@@ -29,10 +29,10 @@ exception Migration_error of string * SRC.Location.t option
 let migration_error location feature =
   raise (Migration_error (feature, location))
 
-let _rewrite_list subrw0 __dt__ __inh__ l =
+let _migrate_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
 
-let rewrite_arg_label_label :
+let migrate_arg_label_label :
   'a -> 'b -> SRC.Asttypes.arg_label -> DST.Asttypes.label
   =
   fun __dt__ __inh__ -> function
@@ -40,7 +40,7 @@ let rewrite_arg_label_label :
   | SRC.Asttypes.Labelled x0 -> x0
   | SRC.Asttypes.Optional x0 -> "?" ^ x0
 
-let rewrite_Parsetree_constant_Asttypes_constant :
+let migrate_Parsetree_constant_Asttypes_constant :
   'a -> SRC.Location.t option -> SRC.Parsetree.constant -> DST.Asttypes.constant =
   fun __dt__ __inh__ -> function
   | SRC.Parsetree.Pconst_integer (x0,x1) ->
@@ -468,42 +468,42 @@ and out_phrase = [%import: All_ast.Ast_4_04.Outcometree.out_phrase]
       }
       ]
     ; dispatchers = {
-        rewrite_option = {
+        migrate_option = {
           srctype = [%typ: 'a option]
         ; dsttype = [%typ: 'b option]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_arg_label = {
+      ; migrate_arg_label = {
           srctype = [%typ: arg_label]
         ; dsttype = [%typ: DST.Asttypes.label]
-        ; code = rewrite_arg_label_label
+        ; code = migrate_arg_label_label
         }
-      ; rewrite_constant = {
+      ; migrate_constant = {
           srctype = [%typ: constant]
         ; dsttype = [%typ: DST.Asttypes.constant]
-        ; code = rewrite_Parsetree_constant_Asttypes_constant
+        ; code = migrate_Parsetree_constant_Asttypes_constant
         }
-      ; rewrite_list = {
+      ; migrate_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
-        ; code = _rewrite_list
+        ; code = _migrate_list
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
-      ; rewrite_payload = {
+      ; migrate_payload = {
           srctype = [%typ: payload]
         ; dsttype = [%typ: DST.Parsetree.payload]
         ; custom_branches_code = function
               PSig _x0 ->
               migration_error __inh__ "PSig"
         }
-      ; rewrite_pattern_desc = {
+      ; migrate_pattern_desc = {
           srctype = [%typ: pattern_desc]
         ; dsttype = [%typ: DST.Parsetree.pattern_desc]
         ; custom_branches_code = function
               Ppat_open _ -> migration_error __inh__ "Ppat_open"
         }
-      ; rewrite_expression_desc = {
+      ; migrate_expression_desc = {
           srctype = [%typ: expression_desc]
         ; dsttype = [%typ: DST.Parsetree.expression_desc]
         ; custom_branches_code = function
@@ -511,53 +511,53 @@ and out_phrase = [%import: All_ast.Ast_4_04.Outcometree.out_phrase]
             | Pexp_unreachable  ->
               migration_error __inh__ "Pexp_unreachable"
         }
-      ; rewrite_constructor_arguments = {
+      ; migrate_constructor_arguments = {
           srctype = [%typ: constructor_arguments]
         ; dsttype = [%typ: DST.Parsetree.core_type list]
         ; custom_branches_code = function
               Pcstr_tuple pcd_args ->
-              List.map (__dt__.rewrite_core_type __dt__ __inh__) pcd_args
+              List.map (__dt__.migrate_core_type __dt__ __inh__) pcd_args
             | Pcstr_record _ -> migration_error __inh__ "Pcstr_record"
         }
-      ; rewrite_signature_item_desc = {
+      ; migrate_signature_item_desc = {
           srctype = [%typ: signature_item_desc]
         ; dsttype = [%typ: DST.Parsetree.signature_item_desc]
         ; custom_branches_code = function
               Psig_type (Recursive, v_0) ->
-              Psig_type (List.map (__dt__.rewrite_type_declaration __dt__ __inh__) v_0)
+              Psig_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) v_0)
             | Psig_type (Nonrecursive, []) -> Psig_type []
             | Psig_type (Nonrecursive, h::t) ->
               let h = { h with ptype_attributes = ({txt="nonrec"; loc=src_loc_none}, PStr[]) :: h.ptype_attributes } in
-              Psig_type (List.map (__dt__.rewrite_type_declaration __dt__ __inh__) (h::t))
+              Psig_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) (h::t))
         }
-      ; rewrite_structure_item_desc = {
+      ; migrate_structure_item_desc = {
           srctype = [%typ: structure_item_desc]
         ; dsttype = [%typ: DST.Parsetree.structure_item_desc]
         ; custom_branches_code = function
               Pstr_type (Recursive, v_0) ->
-              Pstr_type (List.map (__dt__.rewrite_type_declaration __dt__ __inh__) v_0)
+              Pstr_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) v_0)
             | Pstr_type (Nonrecursive, []) -> Pstr_type []
             | Pstr_type (Nonrecursive, h::t) ->
               let h = { h with ptype_attributes = ({txt="nonrec"; loc=src_loc_none}, PStr[]) :: h.ptype_attributes } in
-              Pstr_type (List.map (__dt__.rewrite_type_declaration __dt__ __inh__) (h::t))
+              Pstr_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) (h::t))
         }
-      ; rewrite_printer = {
+      ; migrate_printer = {
           srctype = [%typ: (Format.formatter -> unit)]
         ; dsttype = [%typ: (Format.formatter -> unit)]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_exn = {
+      ; migrate_exn = {
           srctype = [%typ: exn]
         ; dsttype = [%typ: exn]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_out_type = {
+      ; migrate_out_type = {
           srctype = [%typ: out_type]
         ; dsttype = [%typ: DST.Outcometree.out_type]
         ; custom_branches_code = function
               Otyp_attribute _ -> migration_error __inh__ "Otyp_attribute"
         }
-      ; rewrite_out_sig_item = {
+      ; migrate_out_sig_item = {
           srctype = [%typ: out_sig_item]
         ; dsttype = [%typ: DST.Outcometree.out_sig_item]
         ; custom_branches_code = function
@@ -565,11 +565,11 @@ and out_phrase = [%import: All_ast.Ast_4_04.Outcometree.out_phrase]
               let open DST.Outcometree in
               Osig_value
                 (ovd.oval_name,
-                 __dt__.rewrite_out_type __dt__ __inh__ ovd.oval_type,
+                 __dt__.migrate_out_type __dt__ __inh__ ovd.oval_type,
                  ovd.oval_prims)
             | Osig_ellipsis -> migration_error __inh__ "Osig_ellipsis"
         }
-      ; rewrite_out_type_decl = {
+      ; migrate_out_type_decl = {
           srctype = [%typ: out_type_decl]
         ; dsttype = [%typ: DST.Outcometree.out_type_decl]
         ; skip_fields = [ otype_unboxed; otype_immediate ]

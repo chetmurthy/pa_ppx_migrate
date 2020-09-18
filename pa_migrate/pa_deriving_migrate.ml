@@ -373,7 +373,7 @@ value generate_default_dispatcher loc type_decls inherit_code_specs tyid (srcmod
       <:expr< ([%typ: $type:t1$ ], [%typ: $type:t2$ ]) >>)
       (snd (Ctyp.unapplist srctype)) (snd (Ctyp.unapplist dsttype)) in
   let subs = convert_up_list_expr loc subs in
-  let rwname = Printf.sprintf "rewrite_%s" tyid in
+  let rwname = Printf.sprintf "migrate_%s" tyid in
   let extras = match List.assoc tyid inherit_code_specs with [
     e -> [ (<:patt< inherit_code>>, e) ]
   | exception Not_found -> []

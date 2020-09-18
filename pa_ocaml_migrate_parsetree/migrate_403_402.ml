@@ -1,6 +1,6 @@
 
 module SRC = All_ast.Ast_4_03
-module DST = All_ast.Ast_4_04
+module DST = All_ast.Ast_4_02
 
 let src_loc_none =
   let open SRC.Lexing in
@@ -29,8 +29,40 @@ exception Migration_error of string * SRC.Location.t option
 let migration_error location feature =
   raise (Migration_error (feature, location))
 
-let _rewrite_list subrw0 __dt__ __inh__ l =
+let _migrate_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
+
+let migrate_arg_label_label :
+  'a -> 'b -> SRC.Asttypes.arg_label -> DST.Asttypes.label
+  =
+  fun __dt__ __inh__ -> function
+  | SRC.Asttypes.Nolabel  -> ""
+  | SRC.Asttypes.Labelled x0 -> x0
+  | SRC.Asttypes.Optional x0 -> "?" ^ x0
+
+let migrate_Parsetree_constant_Asttypes_constant :
+  'a -> SRC.Location.t option -> SRC.Parsetree.constant -> DST.Asttypes.constant =
+  fun __dt__ __inh__ -> function
+  | SRC.Parsetree.Pconst_integer (x0,x1) ->
+     begin match x1 with
+     | None -> DST.Asttypes.Const_int (int_of_string x0)
+     | Some 'l' ->
+         DST.Asttypes.Const_int32 (Int32.of_string x0)
+     | Some 'L' ->
+         DST.Asttypes.Const_int64 (Int64.of_string x0)
+     | Some 'n' ->
+         DST.Asttypes.Const_nativeint (Nativeint.of_string x0)
+     | Some _ -> migration_error __inh__ "Pconst_integer"
+     end
+  | SRC.Parsetree.Pconst_char x0 ->
+      DST.Asttypes.Const_char x0
+  | SRC.Parsetree.Pconst_string (x0,x1) ->
+      DST.Asttypes.Const_string (x0,x1)
+  | SRC.Parsetree.Pconst_float (x0,x1) ->
+      begin match x1 with
+      | None -> DST.Asttypes.Const_float x0
+      | Some _ -> migration_error __inh__ "Pconst_float"
+      end
 
 type lexing_position = [%import: All_ast.Ast_4_03.Lexing.position]
 and location_t = [%import: All_ast.Ast_4_03.Location.t
@@ -324,8 +356,7 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         srcmod = All_ast.Ast_4_03.Asttypes
       ; dstmod = DST.Asttypes
       ; types = [
-          arg_label
-        ; closed_flag
+          closed_flag
         ; direction_flag
         ; label
         ; mutable_flag
@@ -358,13 +389,10 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         ; class_type_desc
         ; class_type_field
         ; class_type_field_desc
-        ; constant
-        ; constructor_arguments
         ; constructor_declaration
         ; core_type
         ; core_type_desc
         ; expression
-        ; expression_desc
         ; extension
         ; extension_constructor
         ; extension_constructor_kind
@@ -384,14 +412,11 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         ; package_type
         ; pattern
         ; pattern_desc
-        ; payload
         ; row_field
         ; signature
         ; signature_item
-        ; signature_item_desc
         ; structure
         ; structure_item
-        ; structure_item_desc
         ; type_declaration
         ; type_extension
         ; type_kind
@@ -429,8 +454,7 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         srcmod = All_ast.Ast_4_03.Outcometree
       ; dstmod = DST.Outcometree
       ; types = [
-          out_attribute
-        ; out_class_sig_item
+          out_class_sig_item
         ; out_class_type
         ; out_extension_constructor
         ; out_ext_status
@@ -438,44 +462,111 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         ; out_module_type
         ; out_phrase
         ; out_rec_status
-        ; out_sig_item
-        ; out_type
         ; out_type_extension
         ; out_value
-        ; out_val_decl
         ; out_variant
         ]
       }
       ]
     ; dispatchers = {
-        rewrite_option = {
+        migrate_option = {
           srctype = [%typ: 'a option]
         ; dsttype = [%typ: 'b option]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_list = {
+      ; migrate_arg_label = {
+          srctype = [%typ: arg_label]
+        ; dsttype = [%typ: DST.Asttypes.label]
+        ; code = migrate_arg_label_label
+        }
+      ; migrate_constant = {
+          srctype = [%typ: constant]
+        ; dsttype = [%typ: DST.Asttypes.constant]
+        ; code = migrate_Parsetree_constant_Asttypes_constant
+        }
+      ; migrate_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
-        ; code = _rewrite_list
+        ; code = _migrate_list
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
-      ; rewrite_printer = {
+      ; migrate_payload = {
+          srctype = [%typ: payload]
+        ; dsttype = [%typ: DST.Parsetree.payload]
+        ; custom_branches_code = function
+              PSig _x0 ->
+              migration_error __inh__ "PSig"
+        }
+      ; migrate_expression_desc = {
+          srctype = [%typ: expression_desc]
+        ; dsttype = [%typ: DST.Parsetree.expression_desc]
+        ; custom_branches_code = function
+              Pexp_unreachable  ->
+              migration_error __inh__ "Pexp_unreachable"
+        }
+      ; migrate_constructor_arguments = {
+          srctype = [%typ: constructor_arguments]
+        ; dsttype = [%typ: DST.Parsetree.core_type list]
+        ; custom_branches_code = function
+              Pcstr_tuple pcd_args ->
+              List.map (__dt__.migrate_core_type __dt__ __inh__) pcd_args
+            | Pcstr_record _ -> migration_error __inh__ "Pcstr_record"
+        }
+      ; migrate_signature_item_desc = {
+          srctype = [%typ: signature_item_desc]
+        ; dsttype = [%typ: DST.Parsetree.signature_item_desc]
+        ; custom_branches_code = function
+              Psig_type (Recursive, v_0) ->
+              Psig_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) v_0)
+            | Psig_type (Nonrecursive, []) -> Psig_type []
+            | Psig_type (Nonrecursive, h::t) ->
+              let h = { h with ptype_attributes = ({txt="nonrec"; loc=src_loc_none}, PStr[]) :: h.ptype_attributes } in
+              Psig_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) (h::t))
+        }
+      ; migrate_structure_item_desc = {
+          srctype = [%typ: structure_item_desc]
+        ; dsttype = [%typ: DST.Parsetree.structure_item_desc]
+        ; custom_branches_code = function
+              Pstr_type (Recursive, v_0) ->
+              Pstr_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) v_0)
+            | Pstr_type (Nonrecursive, []) -> Pstr_type []
+            | Pstr_type (Nonrecursive, h::t) ->
+              let h = { h with ptype_attributes = ({txt="nonrec"; loc=src_loc_none}, PStr[]) :: h.ptype_attributes } in
+              Pstr_type (List.map (__dt__.migrate_type_declaration __dt__ __inh__) (h::t))
+        }
+      ; migrate_printer = {
           srctype = [%typ: (Format.formatter -> unit)]
         ; dsttype = [%typ: (Format.formatter -> unit)]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_exn = {
+      ; migrate_exn = {
           srctype = [%typ: exn]
         ; dsttype = [%typ: exn]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_out_type_decl = {
+      ; migrate_out_type = {
+          srctype = [%typ: out_type]
+        ; dsttype = [%typ: DST.Outcometree.out_type]
+        ; custom_branches_code = function
+              Otyp_attribute _ -> migration_error __inh__ "Otyp_attribute"
+        }
+      ; migrate_out_sig_item = {
+          srctype = [%typ: out_sig_item]
+        ; dsttype = [%typ: DST.Outcometree.out_sig_item]
+        ; custom_branches_code = function
+              Osig_value ovd ->
+              let open DST.Outcometree in
+              Osig_value
+                (ovd.oval_name,
+                 __dt__.migrate_out_type __dt__ __inh__ ovd.oval_type,
+                 ovd.oval_prims)
+            | Osig_ellipsis -> migration_error __inh__ "Osig_ellipsis"
+        }
+      ; migrate_out_type_decl = {
           srctype = [%typ: out_type_decl]
         ; dsttype = [%typ: DST.Outcometree.out_type_decl]
-        ; custom_fields_code = {
-            otype_unboxed = false
-          }
+        ; skip_fields = [ otype_immediate ]
         }
       }
     }

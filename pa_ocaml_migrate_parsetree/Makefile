@@ -20,19 +20,19 @@ OCAMLCFLAGS += -ppopt -pa_passthru-debug
 
 TARGET=pa_omp.cma
 ML=all_ast.ml \
-	rewrite_402_403.ml rewrite_403_402.ml \
-	rewrite_402_404.ml rewrite_404_402.ml \
-	rewrite_402_405.ml rewrite_405_402.ml \
-	rewrite_402_406.ml rewrite_406_402.ml \
-	rewrite_402_407.ml rewrite_407_402.ml \
-	rewrite_403_404.ml rewrite_404_403.ml \
-	rewrite_404_405.ml rewrite_405_404.ml \
-	rewrite_405_406.ml rewrite_406_405.ml \
-	rewrite_406_407.ml rewrite_407_406.ml \
-	rewrite_407_408.ml rewrite_408_407.ml \
-	rewrite_408_409.ml rewrite_409_408.ml \
-	rewrite_409_410.ml rewrite_410_409.ml \
-	rewrite_410_411.ml rewrite_411_410.ml
+	migrate_402_403.ml migrate_403_402.ml \
+	migrate_402_404.ml migrate_404_402.ml \
+	migrate_402_405.ml migrate_405_402.ml \
+	migrate_402_406.ml migrate_406_402.ml \
+	migrate_402_407.ml migrate_407_402.ml \
+	migrate_403_404.ml migrate_404_403.ml \
+	migrate_404_405.ml migrate_405_404.ml \
+	migrate_405_406.ml migrate_406_405.ml \
+	migrate_406_407.ml migrate_407_406.ml \
+	migrate_407_408.ml migrate_408_407.ml \
+	migrate_408_409.ml migrate_409_408.ml \
+	migrate_409_410.ml migrate_410_409.ml \
+	migrate_410_411.ml migrate_411_410.ml
 CMO := $(ML:.ml=.cmo)
 CMI := $(ML:.ml=.cmi)
 CMX := $(ML:.ml=.cmx)
@@ -75,7 +75,7 @@ $(CMO) $(CMI) $(CMX): $(EXTERNAL)
 
 depend::
 	echo "$(CMO) $(CMI) $(CMX): $(EXTERNAL)" > .depend.NEW
-	$(OCAMLFIND) ocamldep $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -syntax camlp5o all_ast.ml rewrite_*[0-9].ml *.mli > .depend.NEW \
+	$(OCAMLFIND) ocamldep $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -syntax camlp5o all_ast.ml migrate_*[0-9].ml *.mli > .depend.NEW \
 		&& mv .depend.NEW .depend
 
 -include .depend

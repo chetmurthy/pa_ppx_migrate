@@ -42,7 +42,7 @@ exception Migration_error of string * SRC.Location.t option
 let migration_error location feature =
   raise (Migration_error (feature, location))
 
-let _rewrite_list subrw0 __dt__ __inh__ l =
+let _migrate_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
 
 type lexing_position = [%import: All_ast.Ast_4_06.Lexing.position]
@@ -467,61 +467,61 @@ and out_phrase = [%import: All_ast.Ast_4_06.Outcometree.out_phrase]
       }
       ]
     ; dispatchers = {
-        rewrite_option = {
+        migrate_option = {
           srctype = [%typ: 'a option]
         ; dsttype = [%typ: 'b option]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_list = {
+      ; migrate_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
-        ; code = _rewrite_list
+        ; code = _migrate_list
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
-      ; rewrite_row_field = {
+      ; migrate_row_field = {
           srctype = [%typ: row_field]
         ; dsttype = [%typ: DST.Parsetree.row_field]
         ; custom_branches_code = function
               Rtag (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Rtag
-                (__dt__.rewrite_label __dt__ __inh__ (unwrap_loc v_0),
-                 __dt__.rewrite_attributes __dt__ __inh__ v_1,
+                (__dt__.migrate_label __dt__ __inh__ (unwrap_loc v_0),
+                 __dt__.migrate_attributes __dt__ __inh__ v_1,
                  v_2,
-                 List.map (__dt__.rewrite_core_type __dt__ __inh__) v_3)
+                 List.map (__dt__.migrate_core_type __dt__ __inh__) v_3)
         }
-      ; rewrite_object_field = {
+      ; migrate_object_field = {
           srctype = [%typ: object_field]
         ; dsttype = [%typ: (string DST.Asttypes.loc * DST.Parsetree.attributes * DST.Parsetree.core_type)]
         ; dstmodule = DST.Parsetree
         ; code = fun __dt__ __inh__ -> function
             Otag (ll, al, ct) ->
               let open DST.Parsetree in
-              (__dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ ll,
-               __dt__.rewrite_attributes __dt__ __inh__ al,
-               __dt__.rewrite_core_type __dt__ __inh__ ct)
+              (__dt__.migrate_location_loc __dt__.migrate_label __dt__ __inh__ ll,
+               __dt__.migrate_attributes __dt__ __inh__ al,
+               __dt__.migrate_core_type __dt__ __inh__ ct)
             | Oinherit _ -> migration_error __inh__ "Oinherit"
         }
-      ; rewrite_class_type_desc = {
+      ; migrate_class_type_desc = {
           srctype = [%typ: class_type_desc]
         ; dsttype = [%typ: DST.Parsetree.class_type_desc]
         ; custom_branches_code = function
             | Pcty_open _ ->migration_error __inh__ "Pcty_open"
         }
-      ; rewrite_class_expr_desc = {
+      ; migrate_class_expr_desc = {
           srctype = [%typ: class_expr_desc]
         ; dsttype = [%typ: DST.Parsetree.class_expr_desc]
         ; custom_branches_code = function
             | Pcl_open _ -> migration_error __inh__ "Pcl_open"
         }
-      ; rewrite_with_constraint = {
+      ; migrate_with_constraint = {
           srctype = [%typ: with_constraint]
         ; dsttype = [%typ: DST.Parsetree.with_constraint]
         ; custom_branches_code = function
             | Pwith_typesubst ({txt=Lident _;}, v_1) ->
               let open DST.Parsetree in
-              Pwith_typesubst (__dt__.rewrite_type_declaration __dt__ __inh__ v_1)
+              Pwith_typesubst (__dt__.migrate_type_declaration __dt__ __inh__ v_1)
             | Pwith_typesubst _ -> migration_error __inh__ "Pwith_typesubst:longident"
             | Pwith_modsubst (v_0, v_1) ->
               let v_0 = map_loc (function
@@ -529,20 +529,20 @@ and out_phrase = [%import: All_ast.Ast_4_06.Outcometree.out_phrase]
                   | _ -> migration_error __inh__ "Pwith_modsubst:longident") v_0 in
               let open DST.Parsetree in
               Pwith_modsubst
-                (__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0,
-                 __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1)
+                (__dt__.migrate_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0,
+                 __dt__.migrate_location_loc __dt__.migrate_longident_t __dt__ __inh__ v_1)
         }
-      ; rewrite_printer = {
+      ; migrate_printer = {
           srctype = [%typ: (Format.formatter -> unit)]
         ; dsttype = [%typ: (Format.formatter -> unit)]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_exn = {
+      ; migrate_exn = {
           srctype = [%typ: exn]
         ; dsttype = [%typ: exn]
         ; code = fun _ _ x -> x
         }
-      ; rewrite_out_value = {
+      ; migrate_out_value = {
           srctype = [%typ: out_value]
         ; dsttype = [%typ: DST.Outcometree.out_value]
         ; custom_branches_code = function

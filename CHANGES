@@ -3,3 +3,11 @@ pa_ppx_migrate Version 0.01
 -------------------
 
 * [12 Sep 2020] Start project by copying code from pa_ppx
+
+* [18 Sep 2020] Significant changes.
+
+  * addition of "default_dispatchers" option, with a list of records,
+    each record allows the specification of a list of types that are
+    to be migrated in the default manner from a source to a
+    destination module, and with specification of the "inherit_code"
+    possible for each type
