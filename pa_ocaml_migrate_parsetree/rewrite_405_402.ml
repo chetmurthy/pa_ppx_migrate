@@ -41,7 +41,7 @@ let migration_error location feature =
 let _rewrite_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
 
-let rewrite_405_arg_label_402_label :
+let rewrite_arg_label_label :
   'a -> 'b -> SRC.Asttypes.arg_label -> DST.Asttypes.label
   =
   fun __dt__ __inh__ -> function
@@ -49,7 +49,7 @@ let rewrite_405_arg_label_402_label :
   | SRC.Asttypes.Labelled x0 -> x0
   | SRC.Asttypes.Optional x0 -> "?" ^ x0
 
-let rewrite_405_constant_402_constant :
+let rewrite_Parsetree_constant_Asttypes_constant :
   'a -> SRC.Location.t option -> SRC.Parsetree.constant -> DST.Asttypes.constant =
   fun __dt__ __inh__ -> function
   | SRC.Parsetree.Pconst_integer (x0,x1) ->
@@ -483,12 +483,12 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
       ; rewrite_arg_label = {
           srctype = [%typ: arg_label]
         ; dsttype = [%typ: DST.Asttypes.label]
-        ; code = rewrite_405_arg_label_402_label
+        ; code = rewrite_arg_label_label
         }
       ; rewrite_constant = {
           srctype = [%typ: constant]
         ; dsttype = [%typ: DST.Asttypes.constant]
-        ; code = rewrite_405_constant_402_constant
+        ; code = rewrite_Parsetree_constant_Asttypes_constant
         }
       ; rewrite_list = {
           srctype = [%typ: 'a list]
