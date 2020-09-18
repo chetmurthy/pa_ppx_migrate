@@ -30,6 +30,12 @@ let wrap_loc inh v =
     | Some loc -> loc in
   let open SRC.Location in
   { txt = v ; loc = loc }
+ 
+let map_loc f v =
+  let open SRC.Location in
+  { txt = f v.txt ; loc = v.loc }
+
+let unwrap_loc v = v.SRC.Location.txt
 
 let _rewrite_list subrw0 __dt__ __inh__ l =
   List.map (subrw0 __dt__ __inh__) l
