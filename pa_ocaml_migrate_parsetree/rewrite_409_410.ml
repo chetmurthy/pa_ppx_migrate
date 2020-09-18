@@ -380,6 +380,7 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
         ; types = [
             lexing_position
           ; location_t
+          ; location_loc
           ; longident_t
           ]
         }
@@ -509,27 +510,6 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_string_Location_loc = {
-          srctype = [%typ: string location_loc]
-        ; dsttype = [%typ: string DST.Location.loc]
-        }
-      ; rewrite_string_option_Location_loc = {
-          srctype = [%typ: string option location_loc]
-        ; dsttype = [%typ: string option DST.Location.loc]
-        }
-      ; rewrite_label_Location_loc = {
-          srctype = [%typ: label location_loc]
-        ; dsttype = [%typ: label DST.Location.loc]
-        }
-      ; rewrite_longident_Location_loc = {
-          srctype = [%typ: longident_t location_loc]
-        ; dsttype = [%typ: DST.Longident.t DST.Location.loc]
-        }
-      ; rewrite_Location_loc = {
-          srctype = [%typ: 'a location_loc]
-        ; dsttype = [%typ: 'b DST.Location.loc]
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
@@ -544,7 +524,7 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
               let v_0 = map_loc (fun x -> Some x) v_0 in
               let open DST.Parsetree in
               Ppat_unpack
-                (__dt__.rewrite_string_option_Location_loc __dt__ __inh__ v_0)
+                (__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0)
         }
       ; rewrite_expression_desc = {
           srctype = [%typ: expression_desc]
@@ -554,15 +534,9 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
               let v_0 = map_loc (fun x -> Some x) v_0 in
               let open DST.Parsetree in
               Pexp_letmodule
-                (__dt__.rewrite_string_option_Location_loc __dt__ __inh__ v_0,
+                (__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0,
                  __dt__.rewrite_module_expr __dt__ __inh__ v_1,
                  __dt__.rewrite_expression __dt__ __inh__ v_2)
-        }
-      ; rewrite_class_infos = {
-          srctype = [%typ: 'a class_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
-        ; inherit_code = Some pci_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_module_type_desc = {
           srctype = [%typ: module_type_desc]
@@ -575,7 +549,7 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
                 ((match v_1 with
                    None -> Unit
                  | Some mty ->
-                   Named(__dt__.rewrite_string_option_Location_loc __dt__ __inh__ v_0,
+                   Named(__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0,
                          __dt__.rewrite_module_type __dt__ __inh__ mty)),
                  __dt__.rewrite_module_type __dt__ __inh__ v_2)
         }
@@ -587,14 +561,8 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
         ; custom_fields_code = {
             pmd_name =
               let pmd_name = map_loc (fun x -> Some x) pmd_name in
-              __dt__.rewrite_string_option_Location_loc __dt__ __inh__ pmd_name
+              __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ pmd_name
           }
-        }
-      ; rewrite_include_infos = {
-          srctype = [%typ: 'a include_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
-        ; inherit_code = Some pincl_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_module_expr_desc = {
           srctype = [%typ: module_expr_desc]
@@ -607,7 +575,7 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
                 ((match v_1 with
                       None -> Unit
                     | Some mty ->
-                      Named(__dt__.rewrite_string_option_Location_loc __dt__ __inh__ v_0,
+                      Named(__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0,
                             __dt__.rewrite_module_type __dt__ __inh__ mty)),
                  __dt__.rewrite_module_expr __dt__ __inh__ v_2)
         }
@@ -619,7 +587,7 @@ and out_phrase = [%import: All_ast.Ast_4_09.Outcometree.out_phrase]
         ; custom_fields_code = {
             pmb_name =
               let pmb_name = map_loc (fun x -> Some x) pmb_name in
-              __dt__.rewrite_string_option_Location_loc __dt__ __inh__ pmb_name
+              __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ pmb_name
           }
         }
       ; rewrite_printer = {

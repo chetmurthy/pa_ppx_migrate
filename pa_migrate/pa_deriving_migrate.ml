@@ -32,15 +32,19 @@ value longid_of_expr e =
   Asttools.longident_of_string_list (loc_of_expr e) l
 ;
 
-value convert_list_expr e =
+value convert_down_list_expr e =
   let rec crec acc = fun [
     <:expr< [] >> -> List.rev acc
   | <:expr< [ $h$ :: $tl$ ] >> ->
     crec [ h :: acc ] tl
-  | _ -> Ploc.raise (loc_of_expr e) (Failure Fmt.(str "convert_list_expr: malformed list-expression %a"
+  | _ -> Ploc.raise (loc_of_expr e) (Failure Fmt.(str "convert_down_list_expr: malformed list-expression %a"
                                                     Pp_MLast.pp_expr e))
   ] in
   crec [] e
+;
+
+value convert_up_list_expr loc el =
+  List.fold_right (fun e rhs -> <:expr< [ $e$ :: $rhs$ ] >>) el <:expr< [] >>
 ;
 
 module Dispatch1 = struct
@@ -87,7 +91,7 @@ value convert_subs loc e =
 ;
 
 value convert_field_name_list loc e =
-  let el = convert_list_expr e in
+  let el = convert_down_list_expr e in
   List.map (fun [ <:expr< $lid:f$ >> -> f
                 | _ -> Ploc.raise (loc_of_expr e) (Failure Fmt.(str "convert_field_name_list: malformed list %a"
                                                                   Pp_MLast.pp_expr e))
@@ -146,11 +150,13 @@ value convert_tyarg loc type_decls name tyargs =
   ] in
   let skip_fields = match List. assoc "skip_fields" alist with [
     <:expr:< [ $_$ :: $_$ ] >> as z -> convert_field_name_list loc z
+  | <:expr:< [ ] >> -> []
   | _ -> Ploc.raise loc (Failure "bad skip_fields -- must be a list")
   | exception Not_found -> []
   ] in
   let subs = match List. assoc "subs" alist with [
     <:expr:< [ $_$ :: $_$ ] >> as z -> convert_subs loc z
+  | <:expr:< [ ] >> -> []
   | _ -> Ploc.raise loc (Failure "bad tyarg rhs -- must be a list")
   | exception Not_found -> []
   ] in
@@ -317,6 +323,31 @@ value must_subst_lid (srclid, dstlid) li =
   in srec li
 ;
 
+value must_subst_lid_in_ctyp (srclid, dstlid) ty =
+  match Ctyp.unapplist ty with [
+    (<:ctyp:< $longid:li$ . $lid:lid$ >>, args) ->
+    let li = must_subst_lid (srclid, dstlid) li in
+    Ctyp.applist <:ctyp< $longid:li$ . $lid:lid$ >> args
+  | _ ->
+    Ploc.raise (loc_of_ctyp ty)
+      (Failure Fmt.(str "must_subst_lid_in_ctyp: the manifest type must be module-qualified:@ %a"
+                      Pp_MLast.pp_ctyp ty))
+  ]
+;
+
+value fresh_tyv_args suffix ty =
+  let (ty0, args) = Ctyp.unapplist ty in
+  let args = List.map (fun [
+      <:ctyp:< ' $id$ >> ->
+      let id = id ^ suffix in
+      <:ctyp:< ' $id$ >>
+    | _ -> Ploc.raise (loc_of_ctyp ty)
+        (Failure Fmt.(str "fresh_tyv_args: can only apply to args that are type-variables:@ %a"
+                        Pp_MLast.pp_ctyp ty))
+    ]) args in
+  Ctyp.applist ty0 args
+;
+
 value generate_dsttype loc (srclid, dstlid) td =
   let ty = match td.tdDef with [
     <:ctyp< $t1$ == $_$ >> -> t1
@@ -325,13 +356,34 @@ value generate_dsttype loc (srclid, dstlid) td =
     let loc = loc_of_ctyp td.tdDef in
     <:ctyp< $longid:srclid$ . $lid:tname$ >>
   ] in
-  match ty with [
-    <:ctyp:< $longid:li$ . $lid:lid$ >> ->
-    let li = must_subst_lid (srclid, dstlid) li in
-    <:ctyp< $longid:li$ . $lid:lid$ >>
-  | _ -> Ploc.raise (loc_of_ctyp ty) (Failure Fmt.(str "generate_dsttype: the manifest type must be module-qualified: %a"
-                                                     Pp_MLast.pp_ctyp ty))
-  ]
+  must_subst_lid_in_ctyp (srclid, dstlid) ty
+;
+
+value generate_srctype loc dsttype tyid =
+  let (_, args) = Ctyp.unapplist dsttype in
+  Ctyp.applist <:ctyp:< $lid:tyid$ >> args
+;
+
+value generate_default_dispatcher loc type_decls inherit_code_specs tyid (srcmod, dstmod) td =
+  let dsttype = generate_dsttype (loc_of_type_decl td) (srcmod, dstmod) td in
+  let srctype = generate_srctype (loc_of_type_decl td) dsttype tyid in
+  let dsttype = fresh_tyv_args "1" dsttype in
+  let srctype = fresh_tyv_args "0" srctype in
+  let subs = List.map2 (fun t1 t2 ->
+      <:expr< ([%typ: $type:t1$ ], [%typ: $type:t2$ ]) >>)
+      (snd (Ctyp.unapplist srctype)) (snd (Ctyp.unapplist dsttype)) in
+  let subs = convert_up_list_expr loc subs in
+  let rwname = Printf.sprintf "rewrite_%s" tyid in
+  let extras = match List.assoc tyid inherit_code_specs with [
+    e -> [ (<:patt< inherit_code>>, e) ]
+  | exception Not_found -> []
+  ] in
+  Dispatch1.convert loc type_decls
+    (rwname,
+     [(<:patt< srctype >>, <:expr< [%typ: $type:srctype$] >>)
+     ; (<:patt< dsttype >>, <:expr< [%typ: $type:dsttype$] >>)
+     ; (<:patt< subs >>, subs)
+     ]@extras)
 ;
 
 value build_default_dispatchers loc type_decls e =
@@ -375,17 +427,8 @@ value build_default_dispatchers loc type_decls e =
   List.map (fun tyid ->
     match List.assoc tyid type_decls with [
       td ->
-      let dsttype = generate_dsttype (loc_of_type_decl td) (srcmod, dstmod) td in
-      let rwname = Printf.sprintf "rewrite_%s" tyid in
-      let extras = match List.assoc tyid inherit_code with [
-        e -> [ (<:patt< inherit_code>>, e) ]
-        | exception Not_found -> []
-      ] in
-      Dispatch1.convert loc type_decls
-        (rwname,
-         [(<:patt< srctype >>, <:expr< [%typ: $lid:tyid$] >>)
-         ; (<:patt< dsttype >>, <:expr< [%typ: $type:dsttype$] >>)]
-         @extras)
+        generate_default_dispatcher (loc_of_type_decl td) type_decls inherit_code
+          tyid (srcmod, dstmod) td
       | exception Not_found -> Ploc.raise loc (Failure Fmt.(str "build_default_dispatchers: type %s not declared" tyid))
     ]) types
 ;
@@ -419,7 +462,7 @@ value build_context loc ctxt tdl =
   ] in
   let default_dispatchers = match option ctxt "default_dispatchers" with [
     <:expr< [ $_$ :: $_$ ] >> as e ->
-    let el = convert_list_expr e in
+    let el = convert_down_list_expr e in
     let dll = List.map (build_default_dispatchers loc type_decls) el in
     List.concat dll
   | exception Failure _ -> []

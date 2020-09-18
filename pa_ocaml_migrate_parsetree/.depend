@@ -1,0 +1,106 @@
+all_ast.cmo :
+all_ast.cmx :
+rewrite_402_403.cmo : \
+    all_ast.cmo
+rewrite_402_403.cmx : \
+    all_ast.cmx
+rewrite_402_404.cmo : \
+    all_ast.cmo
+rewrite_402_404.cmx : \
+    all_ast.cmx
+rewrite_402_405.cmo : \
+    all_ast.cmo
+rewrite_402_405.cmx : \
+    all_ast.cmx
+rewrite_402_406.cmo : \
+    all_ast.cmo
+rewrite_402_406.cmx : \
+    all_ast.cmx
+rewrite_402_407.cmo : \
+    all_ast.cmo
+rewrite_402_407.cmx : \
+    all_ast.cmx
+rewrite_403_402.cmo : \
+    all_ast.cmo
+rewrite_403_402.cmx : \
+    all_ast.cmx
+rewrite_403_404.cmo : \
+    all_ast.cmo
+rewrite_403_404.cmx : \
+    all_ast.cmx
+rewrite_404_402.cmo : \
+    all_ast.cmo
+rewrite_404_402.cmx : \
+    all_ast.cmx
+rewrite_404_403.cmo : \
+    all_ast.cmo
+rewrite_404_403.cmx : \
+    all_ast.cmx
+rewrite_404_405.cmo : \
+    all_ast.cmo
+rewrite_404_405.cmx : \
+    all_ast.cmx
+rewrite_405_402.cmo : \
+    all_ast.cmo
+rewrite_405_402.cmx : \
+    all_ast.cmx
+rewrite_405_404.cmo : \
+    all_ast.cmo
+rewrite_405_404.cmx : \
+    all_ast.cmx
+rewrite_405_406.cmo : \
+    all_ast.cmo
+rewrite_405_406.cmx : \
+    all_ast.cmx
+rewrite_406_402.cmo : \
+    all_ast.cmo
+rewrite_406_402.cmx : \
+    all_ast.cmx
+rewrite_406_405.cmo : \
+    all_ast.cmo
+rewrite_406_405.cmx : \
+    all_ast.cmx
+rewrite_406_407.cmo : \
+    all_ast.cmo
+rewrite_406_407.cmx : \
+    all_ast.cmx
+rewrite_407_402.cmo : \
+    all_ast.cmo
+rewrite_407_402.cmx : \
+    all_ast.cmx
+rewrite_407_406.cmo : \
+    all_ast.cmo
+rewrite_407_406.cmx : \
+    all_ast.cmx
+rewrite_407_408.cmo : \
+    all_ast.cmo
+rewrite_407_408.cmx : \
+    all_ast.cmx
+rewrite_408_407.cmo : \
+    all_ast.cmo
+rewrite_408_407.cmx : \
+    all_ast.cmx
+rewrite_408_409.cmo : \
+    all_ast.cmo
+rewrite_408_409.cmx : \
+    all_ast.cmx
+rewrite_409_408.cmo : \
+    all_ast.cmo
+rewrite_409_408.cmx : \
+    all_ast.cmx
+rewrite_409_410.cmo : \
+    all_ast.cmo
+rewrite_409_410.cmx : \
+    all_ast.cmx
+rewrite_410_409.cmo : \
+    all_ast.cmo
+rewrite_410_409.cmx : \
+    all_ast.cmx
+rewrite_410_411.cmo : \
+    all_ast.cmo
+rewrite_410_411.cmx : \
+    all_ast.cmx
+rewrite_411_410.cmo : \
+    all_ast.cmo
+rewrite_411_410.cmx : \
+    all_ast.cmx

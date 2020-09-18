@@ -348,6 +348,7 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         ; types = [
             lexing_position
           ; location_t
+          ; location_loc
           ; longident_t
           ]
         }
@@ -380,6 +381,7 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         ; class_field
         ; class_field_desc
         ; class_field_kind
+        ; class_infos
         ; class_signature
         ; class_structure
         ; class_type
@@ -396,6 +398,7 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         ; extension_constructor_kind
         ; include_declaration
         ; include_description
+        ; include_infos
         ; label_declaration
         ; location_stack
         ; module_binding
@@ -424,12 +427,14 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
       ; inherit_code = {
           class_expr = Some pcl_loc
         ; class_field = Some pcf_loc
+        ; class_infos = Some pci_loc
         ; class_type_field = Some pctf_loc
         ; class_type = Some pcty_loc
         ; constructor_declaration = Some pcd_loc
         ; core_type = Some ptyp_loc
         ; expression = Some pexp_loc
         ; extension_constructor = Some pext_loc
+        ; include_infos = Some pincl_loc
         ; label_declaration = Some pld_loc
         ; module_binding = Some pmb_loc
         ; module_declaration = Some pmd_loc
@@ -470,11 +475,6 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_Location_loc = {
-          srctype = [%typ: 'a location_loc]
-        ; dsttype = [%typ: 'b DST.Location.loc]
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_arg_label = {
           srctype = [%typ: arg_label]
         ; dsttype = [%typ: DST.Asttypes.label]
@@ -513,12 +513,6 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
               List.map (__dt__.rewrite_core_type __dt__ __inh__) pcd_args
             | Pcstr_record _ -> migration_error __inh__ "Pcstr_record"
         }
-      ; rewrite_class_infos = {
-          srctype = [%typ: 'a class_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
-        ; inherit_code = Some pci_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_signature_item_desc = {
           srctype = [%typ: signature_item_desc]
         ; dsttype = [%typ: DST.Parsetree.signature_item_desc]
@@ -529,12 +523,6 @@ and out_phrase = [%import: All_ast.Ast_4_03.Outcometree.out_phrase]
             | Psig_type (Nonrecursive, h::t) ->
               let h = { h with ptype_attributes = ({txt="nonrec"; loc=src_loc_none}, PStr[]) :: h.ptype_attributes } in
               Psig_type (List.map (__dt__.rewrite_type_declaration __dt__ __inh__) (h::t))
-        }
-      ; rewrite_include_infos = {
-          srctype = [%typ: 'a include_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
-        ; inherit_code = Some pincl_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_structure_item_desc = {
           srctype = [%typ: structure_item_desc]

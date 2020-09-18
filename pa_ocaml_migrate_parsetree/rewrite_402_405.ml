@@ -337,6 +337,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; types = [
             lexing_position
           ; location_t
+          ; location_loc
           ; longident_t
           ]
         }
@@ -367,6 +368,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; class_expr
         ; class_field
         ; class_field_kind
+        ; class_infos
         ; class_signature
         ; class_structure
         ; class_type
@@ -378,6 +380,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; extension_constructor
         ; include_declaration
         ; include_description
+        ; include_infos
         ; label_declaration
         ; location_stack
         ; module_binding
@@ -407,11 +410,13 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
       ; inherit_code = {
           class_expr = Some pcl_loc
         ; class_field = Some pcf_loc
+        ; class_infos = Some pci_loc
         ; class_type_field = Some pctf_loc
         ; class_type = Some pcty_loc
         ; core_type = Some ptyp_loc
         ; expression = Some pexp_loc
         ; extension_constructor = Some pext_loc
+        ; include_infos = Some pincl_loc
         ; label_declaration = Some pld_loc
         ; module_binding = Some pmb_loc
         ; module_declaration = Some pmd_loc
@@ -452,15 +457,6 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_string_Location_loc = {
-          srctype = [%typ: string location_loc]
-        ; dsttype = [%typ: string DST.Location.loc]
-        }
-      ; rewrite_Location_loc = {
-          srctype = [%typ: 'a location_loc]
-        ; dsttype = [%typ: 'b DST.Location.loc]
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_constant = {
           srctype = [%typ: constant]
         ; dsttype = [%typ: DST.Parsetree.constant]
@@ -486,7 +482,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
               let open DST.Parsetree in
               Ptyp_object
                 (List.map (fun (v_0, v_1, v_2) ->
-                     (__dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                     (__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
                       __dt__.rewrite_attributes __dt__ __inh__ v_1,
                       __dt__.rewrite_core_type __dt__ __inh__ v_2)) v_0,
                  __dt__.rewrite_closed_flag __dt__ __inh__ v_1)
@@ -495,7 +491,7 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
               let open DST.Parsetree in
               Ptyp_poly
                 (List.map (fun v_0 ->
-                  __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0)) v_0,
+                  __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0)) v_0,
                  __dt__.rewrite_core_type __dt__ __inh__ v_1)
         }
       ; rewrite_expression_desc = {
@@ -520,11 +516,11 @@ and out_phrase = [%import: All_ast.Ast_4_02.Outcometree.out_phrase]
               let open DST.Parsetree in
               Pexp_send
                 (__dt__.rewrite_expression __dt__ __inh__ v_0,
-                 __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_1))
+                 __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_1))
             | Pexp_newtype (v_0, v_1) ->
               let open DST.Parsetree in
               Pexp_newtype
-                (__dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                (__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
                  __dt__.rewrite_expression __dt__ __inh__ v_1)
         }
       ; rewrite_constructor_declaration = {
@@ -566,7 +562,7 @@ Pcty_arrow (v_0, v_1, v_2) ->
               let open DST.Parsetree in
               Pctf_val
                 ((fun (v_0, v_1, v_2, v_3) ->
-                    __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                    __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
                     __dt__.rewrite_mutable_flag __dt__ __inh__ v_1,
                     __dt__.rewrite_virtual_flag __dt__ __inh__ v_2,
                     __dt__.rewrite_core_type __dt__ __inh__ v_3)
@@ -576,17 +572,11 @@ Pcty_arrow (v_0, v_1, v_2) ->
               let open DST.Parsetree in
               Pctf_method
                 ((fun (v_0, v_1, v_2, v_3) ->
-                    __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                    __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v_0),
                     __dt__.rewrite_private_flag __dt__ __inh__ v_1,
                     __dt__.rewrite_virtual_flag __dt__ __inh__ v_2,
                     __dt__.rewrite_core_type __dt__ __inh__ v_3) v_0)
 
-        }
-      ; rewrite_class_infos = {
-          srctype = [%typ: 'a class_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
-        ; inherit_code = Some pci_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_class_expr_desc = {
           srctype = [%typ: class_expr_desc]
@@ -617,7 +607,7 @@ Pcty_arrow (v_0, v_1, v_2) ->
               Pcf_inherit
                 (__dt__.rewrite_override_flag __dt__ __inh__ v_0,
                  __dt__.rewrite_class_expr __dt__ __inh__ v_1,
-                 Option.map (fun v -> __dt__.rewrite_string_Location_loc __dt__ __inh__ (wrap_loc __inh__ v)) v_2)
+                 Option.map (fun v -> __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ (wrap_loc __inh__ v)) v_2)
         }
       ; rewrite_signature_item_desc = {
           srctype = [%typ: signature_item_desc]
@@ -632,12 +622,6 @@ Pcty_arrow (v_0, v_1, v_2) ->
               let open DST.Parsetree in
               Psig_type
                 (rf, List.map (__dt__.rewrite_type_declaration __dt__ __inh__) v_0)
-        }
-      ; rewrite_include_infos = {
-          srctype = [%typ: 'a include_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
-        ; inherit_code = Some pincl_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_structure_item_desc = {
           srctype = [%typ: structure_item_desc]

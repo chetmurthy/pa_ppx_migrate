@@ -386,6 +386,7 @@ and out_phrase = [%import: All_ast.Ast_4_10.Outcometree.out_phrase]
         ; types = [
             lexing_position
           ; location_t
+          ; location_loc
           ; longident_t
           ]
         }
@@ -524,27 +525,6 @@ and out_phrase = [%import: All_ast.Ast_4_10.Outcometree.out_phrase]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_string_Location_loc = {
-          srctype = [%typ: string location_loc]
-        ; dsttype = [%typ: string DST.Location.loc]
-        }
-      ; rewrite_string_option_Location_loc = {
-          srctype = [%typ: string option location_loc]
-        ; dsttype = [%typ: string option DST.Location.loc]
-        }
-      ; rewrite_label_Location_loc = {
-          srctype = [%typ: label location_loc]
-        ; dsttype = [%typ: label DST.Location.loc]
-        }
-      ; rewrite_longident_Location_loc = {
-          srctype = [%typ: longident_t location_loc]
-        ; dsttype = [%typ: DST.Longident.t DST.Location.loc]
-        }
-      ; rewrite_Location_loc = {
-          srctype = [%typ: 'a location_loc]
-        ; dsttype = [%typ: 'b DST.Location.loc]
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_constant = {
           srctype = [%typ: constant]
         ; dsttype = [%typ: DST.Parsetree.constant]
@@ -562,18 +542,6 @@ and out_phrase = [%import: All_ast.Ast_4_10.Outcometree.out_phrase]
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
         ; code = _rewrite_list
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
-      ; rewrite_class_infos = {
-          srctype = [%typ: 'a class_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
-        ; inherit_code = Some pci_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
-      ; rewrite_include_infos = {
-          srctype = [%typ: 'a include_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
-        ; inherit_code = Some pincl_loc
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_type_immediacy_t = {

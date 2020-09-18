@@ -375,18 +375,19 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
     ; dispatch_table_value = dt
     ; default_dispatchers = [
         {
-          srcmod = All_ast.Ast_4_08 ;
-          dstmod = DST ;
-          types = [
+          srcmod = All_ast.Ast_4_08
+        ; dstmod = DST
+        ; types = [
             lexing_position
           ; location_t
+          ; location_loc
           ; longident_t
           ]
         }
       ; {
-        srcmod = All_ast.Ast_4_08.Asttypes ;
-        dstmod = DST.Asttypes ;
-        types = [
+        srcmod = All_ast.Ast_4_08.Asttypes
+      ; dstmod = DST.Asttypes
+      ; types = [
           arg_label
         ; closed_flag
         ; direction_flag
@@ -400,42 +401,59 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
         ]
       }
       ; {
-        srcmod = All_ast.Ast_4_08.Parsetree ;
-        dstmod = DST.Parsetree ;
-        types = [
+        srcmod = All_ast.Ast_4_08.Parsetree
+      ; dstmod = DST.Parsetree
+      ; types = [
           attributes
         ; case
         ; class_declaration
         ; class_description
+        ; class_expr
+        ; class_field
         ; class_field_desc
         ; class_field_kind
         ; class_signature
         ; class_structure
+        ; class_type
         ; class_type_declaration
+        ; class_type_field
         ; class_type_field_desc
         ; constant
         ; constructor_arguments
+        ; constructor_declaration
         ; core_type_desc
         ; extension
+        ; extension_constructor
         ; extension_constructor_kind
         ; include_declaration
         ; include_description
+        ; label_declaration
         ; location_stack
+        ; module_binding
+        ; module_declaration
+        ; module_expr
         ; module_expr_desc
+        ; module_type
+        ; module_type_declaration
         ; module_type_desc
         ; package_type
         ; payload
         ; pattern_desc
         ; signature
+        ; signature_item
         ; structure
+        ; structure_item
+        ; type_declaration
         ; type_kind
+        ; value_binding
+        ; value_description
         ; with_constraint
         ]
       }
       ; {
-        srcmod = All_ast.Ast_4_08.Outcometree ;
-        dstmod = DST.Outcometree ;
-        types = [
+        srcmod = All_ast.Ast_4_08.Outcometree
+      ; dstmod = DST.Outcometree
+      ; types = [
           out_attribute
         ; out_class_sig_item
         ; out_class_type
@@ -462,23 +480,6 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_string_Location_loc = {
-          srctype = [%typ: string location_loc]
-        ; dsttype = [%typ: string DST.Location.loc]
-        }
-      ; rewrite_label_Location_loc = {
-          srctype = [%typ: label location_loc]
-        ; dsttype = [%typ: label DST.Location.loc]
-        }
-      ; rewrite_longident_Location_loc = {
-          srctype = [%typ: longident_t location_loc]
-        ; dsttype = [%typ: DST.Longident.t DST.Location.loc]
-        }
-      ; rewrite_Location_loc = {
-          srctype = [%typ: 'a location_loc]
-        ; dsttype = [%typ: 'b DST.Location.loc]
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
@@ -491,7 +492,7 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
         ; code = fun __dt__ __inh__ { attr_name = attr_name;
                                       attr_payload = attr_payload;
                                       attr_loc = _ } ->
-            (__dt__.rewrite_string_Location_loc __dt__ __inh__ attr_name,
+            (__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ attr_name,
              __dt__.rewrite_payload __dt__ __inh__ attr_payload)
         }
       ; rewrite_core_type = {
@@ -508,7 +509,7 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
                 prf_loc = prf_loc ;
                 prf_attributes = prf_attributes } ->
               let open DST.Parsetree in
-              Rtag(__dt__.rewrite_label_Location_loc __dt__ __inh__ ll,
+              Rtag(__dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ ll,
                    __dt__.rewrite_attributes __dt__ __inh__ prf_attributes,
                    b,
                    List.map (__dt__.rewrite_core_type __dt__ __inh__) ctl)
@@ -527,7 +528,7 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
                 pof_loc = pof_loc;
                 pof_attributes = pof_attributes } ->
               let open DST.Parsetree in
-              Otag(__dt__.rewrite_label_Location_loc __dt__ __inh__ ll,
+              Otag(__dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ ll,
                    __dt__.rewrite_attributes __dt__ __inh__ pof_attributes,
                    __dt__.rewrite_core_type __dt__ __inh__ ct)
 
@@ -561,47 +562,17 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
                            popen_attributes = attributes }, e) ->
               let open DST.Parsetree in
               Pexp_open(__dt__.rewrite_override_flag __dt__ __inh__ popen_override,
-                        __dt__.rewrite_longident_Location_loc __dt__ __inh__ ll,
+                        __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ ll,
                         __dt__.rewrite_expression __dt__ __inh__ e)
             | Pexp_open ({ popen_expr = _ ; }, _) ->
               migration_error __inh__ "Pexp_open:longident"
             | Pexp_letop _ ->
               migration_error __inh__ "Pexp_letop"
         }
-      ; rewrite_value_description = {
-          srctype = [%typ: value_description]
-        ; dsttype = [%typ: DST.Parsetree.value_description]
-        ; inherit_code = Some pval_loc
-        }
-      ; rewrite_type_declaration = {
-          srctype = [%typ: type_declaration]
-        ; dsttype = [%typ: DST.Parsetree.type_declaration]
-        ; inherit_code = Some ptype_loc
-        }
-      ; rewrite_label_declaration = {
-          srctype = [%typ: label_declaration]
-        ; dsttype = [%typ: DST.Parsetree.label_declaration]
-        ; inherit_code = Some pld_loc
-        }
-      ; rewrite_constructor_declaration = {
-          srctype = [%typ: constructor_declaration]
-        ; dsttype = [%typ: DST.Parsetree.constructor_declaration]
-        ; inherit_code = Some pcd_loc
-        }
       ; rewrite_type_extension = {
           srctype = [%typ: type_extension]
         ; dsttype = [%typ: DST.Parsetree.type_extension]
         ; skip_fields = [ ptyext_loc ]
-        }
-      ; rewrite_extension_constructor = {
-          srctype = [%typ: extension_constructor]
-        ; dsttype = [%typ: DST.Parsetree.extension_constructor]
-        ; inherit_code = Some pext_loc
-        }
-      ; rewrite_class_type = {
-          srctype = [%typ: class_type]
-        ; dsttype = [%typ: DST.Parsetree.class_type]
-        ; inherit_code = Some pcty_loc
         }
       ; rewrite_class_type_desc = {
           srctype = [%typ: class_type_desc]
@@ -613,24 +584,8 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
                    popen_attributes = popen_attributes }, ct) ->
               let open DST.Parsetree in
               Pcty_open (__dt__.rewrite_override_flag __dt__ __inh__ popen_override,
-                         __dt__.rewrite_longident_Location_loc __dt__ __inh__ ll,
+                         __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ ll,
                         __dt__.rewrite_class_type __dt__ __inh__ ct)
-        }
-      ; rewrite_class_type_field = {
-          srctype = [%typ: class_type_field]
-        ; dsttype = [%typ: DST.Parsetree.class_type_field]
-        ; inherit_code = Some pctf_loc
-        }
-      ; rewrite_class_infos = {
-          srctype = [%typ: 'a class_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
-        ; inherit_code = Some pci_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
-      ; rewrite_class_expr = {
-          srctype = [%typ: class_expr]
-        ; dsttype = [%typ: DST.Parsetree.class_expr]
-        ; inherit_code = Some pcl_loc
         }
       ; rewrite_class_expr_desc = {
           srctype = [%typ: class_expr_desc]
@@ -644,23 +599,8 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
                  v_2) ->
               let open DST.Parsetree in
               Pcl_open (__dt__.rewrite_override_flag __dt__ __inh__ v_0,
-                        __dt__.rewrite_longident_Location_loc __dt__ __inh__ v_1,
+                        __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1,
                         __dt__.rewrite_class_expr __dt__ __inh__ v_2)
-        }
-      ; rewrite_class_field = {
-          srctype = [%typ: class_field]
-        ; dsttype = [%typ: DST.Parsetree.class_field]
-        ; inherit_code = Some pcf_loc
-        }
-      ; rewrite_module_type = {
-          srctype = [%typ: module_type]
-        ; dsttype = [%typ: DST.Parsetree.module_type]
-        ; inherit_code = Some pmty_loc
-        }
-      ; rewrite_signature_item = {
-          srctype = [%typ: signature_item]
-        ; dsttype = [%typ: DST.Parsetree.signature_item]
-        ; inherit_code = Some psig_loc
         }
       ; rewrite_signature_item_desc = {
           srctype = [%typ: signature_item_desc]
@@ -673,40 +613,14 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
               migration_error __inh__ "Psig_modsubst"
             | Psig_typesubst _ -> migration_error __inh__ "Psig_typesubst"
         }
-      ; rewrite_module_declaration = {
-          srctype = [%typ: module_declaration]
-        ; dsttype = [%typ: DST.Parsetree.module_declaration]
-        ; inherit_code = Some pmd_loc
-        }
-      ; rewrite_module_type_declaration = {
-          srctype = [%typ: module_type_declaration]
-        ; dsttype = [%typ: DST.Parsetree.module_type_declaration]
-        ; inherit_code = Some pmtd_loc
-        }
       ; rewrite_open_description = {
           srctype = [%typ: open_description]
         ; dsttype = [%typ: DST.Parsetree.open_description]
         ; inherit_code = Some popen_loc
         ; skip_fields = [ popen_expr ]
         ; custom_fields_code = {
-            popen_lid = __dt__.rewrite_longident_Location_loc __dt__ __inh__ popen_expr
+            popen_lid = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ popen_expr
           }
-        }
-      ; rewrite_include_infos = {
-          srctype = [%typ: 'a include_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
-        ; inherit_code = Some pincl_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
-      ; rewrite_module_expr = {
-          srctype = [%typ: module_expr]
-        ; dsttype = [%typ: DST.Parsetree.module_expr]
-        ; inherit_code = Some pmod_loc
-        }
-      ; rewrite_structure_item = {
-          srctype = [%typ: structure_item]
-        ; dsttype = [%typ: DST.Parsetree.structure_item]
-        ; inherit_code = Some pstr_loc
         }
       ; rewrite_structure_item_desc = {
           srctype = [%typ: structure_item_desc]
@@ -722,27 +636,12 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
                           popen_loc = popen_loc;
                           popen_attributes = popen_attributes } ->
               let open DST.Parsetree in
-              Pstr_open { popen_lid = __dt__.rewrite_longident_Location_loc __dt__ __inh__ ll ;
+              Pstr_open { popen_lid = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ ll ;
                           popen_override = __dt__.rewrite_override_flag __dt__ __inh__ popen_override ;
                           popen_loc = __dt__.rewrite_location_t __dt__ __inh__ popen_loc ;
                           popen_attributes  = __dt__.rewrite_attributes __dt__ __inh__ popen_attributes }
             | Pstr_open { popen_expr = _ ; } ->
               migration_error __inh__ "Pstr_open:longident"
-        }
-      ; rewrite_value_binding = {
-          srctype = [%typ: value_binding]
-        ; dsttype = [%typ: DST.Parsetree.value_binding]
-        ; inherit_code = Some pvb_loc
-        }
-      ; rewrite_module_binding = {
-          srctype = [%typ: module_binding]
-        ; dsttype = [%typ: DST.Parsetree.module_binding]
-        ; inherit_code = Some pmb_loc
-        }
-      ; rewrite_out_name = {
-          srctype = [%typ: out_name]
-        ; dsttype = [%typ: string]
-        ; code = fun _ _ { printed_name = printed_name } -> printed_name
         }
       ; rewrite_printer = {
           srctype = [%typ: (Format.formatter -> unit)]
@@ -753,6 +652,11 @@ and out_phrase = [%import: All_ast.Ast_4_08.Outcometree.out_phrase]
           srctype = [%typ: exn]
         ; dsttype = [%typ: exn]
         ; code = fun _ _ x -> x
+        }
+      ; rewrite_out_name = {
+          srctype = [%typ: out_name]
+        ; dsttype = [%typ: string]
+        ; code = fun _ _ { printed_name = printed_name } -> printed_name
         }
       ; rewrite_out_type = {
           srctype = [%typ: out_type]

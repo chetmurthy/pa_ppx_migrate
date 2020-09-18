@@ -342,6 +342,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; types = [
             lexing_position
           ; location_t
+          ; location_loc
           ; longident_t
           ]
         }
@@ -459,23 +460,6 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_string_Location_loc = {
-          srctype = [%typ: string location_loc]
-        ; dsttype = [%typ: string DST.Location.loc]
-        }
-      ; rewrite_label_Location_loc = {
-          srctype = [%typ: label location_loc]
-        ; dsttype = [%typ: label DST.Location.loc]
-        }
-      ; rewrite_longident_Location_loc = {
-          srctype = [%typ: longident_t location_loc]
-        ; dsttype = [%typ: DST.Longident.t DST.Location.loc]
-        }
-      ; rewrite_Location_loc = {
-          srctype = [%typ: 'a location_loc]
-        ; dsttype = [%typ: 'b DST.Location.loc]
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
@@ -487,7 +471,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; dsttype = [%typ: DST.Parsetree.attribute]
         ; code = fun __dt__ __inh__ (v_0, v_1) ->
             let open DST.Parsetree in
-            let name = __dt__.rewrite_string_Location_loc __dt__ __inh__ v_0 in
+            let name = __dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0 in
             let pay = __dt__.rewrite_payload __dt__ __inh__ v_1 in
             { attr_name = name;
               attr_payload = pay;
@@ -507,7 +491,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; custom_branches_code = function
               Rtag (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_label_Location_loc __dt__ __inh__ v_0 in
+              let ll = __dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ v_0 in
               { prf_desc = Rtag
                     (ll,
                      v_2,
@@ -528,7 +512,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; custom_branches_code = function
               Otag (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_label_Location_loc __dt__ __inh__ v_0 in
+              let ll = __dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ v_0 in
               { pof_desc = Otag (ll, __dt__.rewrite_core_type __dt__ __inh__ v_2);
                 pof_loc = ll.loc;
                 pof_attributes = __dt__.rewrite_attributes __dt__ __inh__ v_1 }
@@ -560,7 +544,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; custom_branches_code = function
             | Pexp_open (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_longident_Location_loc __dt__ __inh__ v_1 in
+              let ll = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1 in
               Pexp_open
                 ({ popen_expr = { pmod_desc = Pmod_ident ll;
                                   pmod_loc = ll.loc ;
@@ -583,7 +567,7 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; custom_branches_code = function
             | Pcty_open (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_longident_Location_loc __dt__ __inh__ v_1 in
+              let ll = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1 in
               Pcty_open
                 ({ popen_expr = ll;
                    popen_override = __dt__.rewrite_override_flag __dt__ __inh__ v_0;
@@ -591,19 +575,13 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
                    popen_attributes = [] },
                  __dt__.rewrite_class_type __dt__ __inh__ v_2)
         }
-      ; rewrite_class_infos = {
-          srctype = [%typ: 'a class_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
-        ; inherit_code = Some pci_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_class_expr_desc = {
           srctype = [%typ: class_expr_desc]
         ; dsttype = [%typ: DST.Parsetree.class_expr_desc]
         ; custom_branches_code = function
             | Pcl_open (v_0, v_1, v_2) ->
               let open DST.Parsetree in
-              let ll = __dt__.rewrite_longident_Location_loc __dt__ __inh__ v_1 in
+              let ll = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1 in
               Pcl_open
                 ({ popen_expr = ll;
                    popen_override = __dt__.rewrite_override_flag __dt__ __inh__ v_0;
@@ -628,14 +606,8 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; inherit_code = Some popen_loc
         ; skip_fields = [ popen_lid ]
         ; custom_fields_code = {
-            popen_expr = __dt__.rewrite_longident_Location_loc __dt__ __inh__ popen_lid
+            popen_expr = __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ popen_lid
           }
-        }
-      ; rewrite_include_infos = {
-          srctype = [%typ: 'a include_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
-        ; inherit_code = Some pincl_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_structure_item_desc = {
           srctype = [%typ: structure_item_desc]
@@ -664,6 +636,11 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
         ; dsttype = [%typ: (Format.formatter -> unit)]
         ; code = fun _ _ x -> x
         }
+      ; rewrite_exn = {
+          srctype = [%typ: exn]
+        ; dsttype = [%typ: exn]
+        ; code = fun _ _ x -> x
+        }
       ; rewrite_out_ident = {
           srctype = [%typ: out_ident]
         ; dsttype = [%typ: DST.Outcometree.out_ident]
@@ -671,11 +648,6 @@ and out_phrase = [%import: All_ast.Ast_4_07.Outcometree.out_phrase]
             | Oide_ident v_0 ->
               let open DST.Outcometree in
               Oide_ident { printed_name = v_0 }
-        }
-      ; rewrite_exn = {
-          srctype = [%typ: exn]
-        ; dsttype = [%typ: exn]
-        ; code = fun _ _ x -> x
         }
       ; rewrite_out_type = {
           srctype = [%typ: out_type]

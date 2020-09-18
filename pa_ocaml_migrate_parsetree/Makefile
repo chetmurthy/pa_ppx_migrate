@@ -75,7 +75,12 @@ $(CMO) $(CMI) $(CMX): $(EXTERNAL)
 
 depend::
 	echo "$(CMO) $(CMI) $(CMX): $(EXTERNAL)" > .depend.NEW
-	$(OCAMLFIND) ocamldep $(DEBUG) -package $(PACKAGES) -syntax camlp5o *.ml *.mli > .depend.NEW \
+	$(OCAMLFIND) ocamldep $(DEBUG) $(OCAMLCFLAGS) -package $(PACKAGES) -syntax camlp5o all_ast.ml rewrite_*[0-9].ml *.mli > .depend.NEW \
 		&& mv .depend.NEW .depend
 
 -include .depend
+
+.ml.cmo:
+	$(NOT_OCAMLFIND) preprocess $(OCAMLCFLAGS) -package $(PACKAGES),camlp5.pr_o -syntax $(SYNTAX) $< > $@.ppo.ml
+	$(OCAMLFIND) ocamlc $(OCAMLCFLAGS) -package $(PACKAGES) -syntax $(SYNTAX) -c $@.ppo.ml
+	$(OCAMLFIND) ocamlc $(OCAMLCFLAGS) -package $(PACKAGES) -syntax $(SYNTAX) -c $<

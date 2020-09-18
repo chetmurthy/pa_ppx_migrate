@@ -330,6 +330,7 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
         ; types = [
             lexing_position
           ; location_t
+          ; location_loc
           ; longident_t
           ]
         }
@@ -363,6 +364,7 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
         ; class_field
         ; class_field_desc
         ; class_field_kind
+        ; class_infos
         ; class_signature
         ; class_structure
         ; class_type
@@ -381,6 +383,7 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
         ; extension_constructor_kind
         ; include_declaration
         ; include_description
+        ; include_infos
         ; label_declaration
         ; location_stack
         ; module_binding
@@ -410,12 +413,14 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
       ; inherit_code = {
           class_expr = Some pcl_loc
         ; class_field = Some pcf_loc
+        ; class_infos = Some pci_loc
         ; class_type_field = Some pctf_loc
         ; class_type = Some pcty_loc
         ; constructor_declaration = Some pcd_loc
         ; core_type = Some ptyp_loc
         ; expression = Some pexp_loc
         ; extension_constructor = Some pext_loc
+        ; include_infos = Some pincl_loc
         ; label_declaration = Some pld_loc
         ; module_binding = Some pmb_loc
         ; module_declaration = Some pmd_loc
@@ -460,23 +465,6 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
         ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         ; code = (fun subrw __dt__ __inh__ x -> Option.map (subrw __dt__ __inh__) x)
         }
-      ; rewrite_string_Location_loc = {
-          srctype = [%typ: string location_loc]
-        ; dsttype = [%typ: string DST.Location.loc]
-        }
-      ; rewrite_label_Location_loc = {
-          srctype = [%typ: label location_loc]
-        ; dsttype = [%typ: label DST.Location.loc]
-        }
-      ; rewrite_longident_Location_loc = {
-          srctype = [%typ: longident_t location_loc]
-        ; dsttype = [%typ: DST.Longident.t DST.Location.loc]
-        }
-      ; rewrite_Location_loc = {
-          srctype = [%typ: 'a location_loc]
-        ; dsttype = [%typ: 'b DST.Location.loc]
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
       ; rewrite_list = {
           srctype = [%typ: 'a list]
         ; dsttype = [%typ: 'b list]
@@ -491,7 +479,7 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
               let open DST.Parsetree in
               Ptyp_object
                 (List.map (fun (v_0, v_1, v_2) ->
-                     Otag(__dt__.rewrite_string_Location_loc __dt__ __inh__ v_0,
+                     Otag(__dt__.rewrite_location_loc (fun _ _ x -> x) __dt__ __inh__ v_0,
                           __dt__.rewrite_attributes __dt__ __inh__ v_1,
                           __dt__.rewrite_core_type __dt__ __inh__ v_2)) v_0,
                  __dt__.rewrite_closed_flag __dt__ __inh__ v_1)
@@ -503,22 +491,10 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
               Rtag (v_0, v_1, v_2, v_3) ->
               let open DST.Parsetree in
               Rtag
-                (__dt__.rewrite_label_Location_loc __dt__ __inh__ (wrap_loc __inh__ v_0),
+                (__dt__.rewrite_location_loc __dt__.rewrite_label __dt__ __inh__ (wrap_loc __inh__ v_0),
                  __dt__.rewrite_attributes __dt__ __inh__ v_1,
                  v_2,
                  List.map (__dt__.rewrite_core_type __dt__ __inh__) v_3)
-        }
-      ; rewrite_class_infos = {
-          srctype = [%typ: 'a class_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.class_infos]
-        ; inherit_code = Some pci_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
-        }
-      ; rewrite_include_infos = {
-          srctype = [%typ: 'a include_infos]
-        ; dsttype = [%typ: 'b DST.Parsetree.include_infos]
-        ; inherit_code = Some pincl_loc
-        ; subs = [ ([%typ: 'a], [%typ: 'b]) ]
         }
       ; rewrite_with_constraint = {
           srctype = [%typ: with_constraint]
@@ -528,15 +504,15 @@ and out_phrase = [%import: All_ast.Ast_4_05.Outcometree.out_phrase]
               let lid_loc = map_loc (fun x -> Lident x) x0.ptype_name in 
               let open DST.Parsetree in
               Pwith_typesubst
-                (__dt__.rewrite_longident_Location_loc __dt__ __inh__ lid_loc,
+                (__dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ lid_loc,
                  __dt__.rewrite_type_declaration __dt__ __inh__ x0)
 
             | Pwith_modsubst (v_0, v_1) ->
               let lid_loc = map_loc (fun x -> Lident x) v_0 in 
               let open DST.Parsetree in
               Pwith_modsubst
-                (__dt__.rewrite_longident_Location_loc __dt__ __inh__ lid_loc,
-                 __dt__.rewrite_longident_Location_loc __dt__ __inh__ v_1)
+                (__dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ lid_loc,
+                 __dt__.rewrite_location_loc __dt__.rewrite_longident_t __dt__ __inh__ v_1)
 
         }
       ; rewrite_printer = {
