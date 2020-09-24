@@ -35,7 +35,7 @@ test_ex.byte: ex_ast.cmo ex_migrate.cmo test_ex.cmo
 clean::
 	rm -f  *.ppo.*
 
-EXTERNAL := $(shell $(OCAMLFIND) query -predicates byte -format '%m' $(ALL_PACKAGES))
+EXTERNAL := $(shell $(OCAMLFIND) query -predicates byte -format '%m' $(ALL_PACKAGES) | grep local-install)
 $(CMO): $(EXTERNAL)
 
 depend::

@@ -1,9 +1,21 @@
 : 
+ex_ast.cmo.ppo.cmo :
+ex_ast.cmo.ppo.cmx :
 ex_ast.cmo :
 ex_ast.cmx :
+ex_migrate.cmo.ppo.cmo : \
+    ex_ast.cmo
+ex_migrate.cmo.ppo.cmx : \
+    ex_ast.cmx
 ex_migrate.cmo : \
     ex_ast.cmo
 ex_migrate.cmx : \
+    ex_ast.cmx
+test_ex.cmo.ppo.cmo : \
+    ex_migrate.cmo \
+    ex_ast.cmo
+test_ex.cmo.ppo.cmx : \
+    ex_migrate.cmx \
     ex_ast.cmx
 test_ex.cmo : \
     ex_migrate.cmo \
