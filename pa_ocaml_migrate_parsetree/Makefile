@@ -39,7 +39,7 @@ CMX := $(ML:.ml=.cmx)
 CMT := $(ML:.ml=.cmt)
 CMTI := $(MLI:.mli=.cmti)
 
-all: $(TARGET) $(TARGET:.cma=.cmxa) local-install
+test all: $(TARGET) $(TARGET:.cma=.cmxa) local-install
 
 doc: $(CMT) $(CMTI)
 
@@ -55,7 +55,7 @@ install::
 	$(NOT_OCAMLFIND) reinstall-if-diff pa_ppx_ocaml_migrate_parsetree -destdir $(DESTDIR)/lib META $(TARGET) $(TARGET:.cma=.cmxa) $(TARGET:.cma=.a) $(CMI) $(wildcard *.cmt*)
 	$(RM) -f META
 
-local-install::
+local-install:: $(TARGET) $(TARGET:.cma=.cmxa)
 	$(MAKE) DESTDIR=$(WD)/$(TOP)/local-install/ install
 
 clean::

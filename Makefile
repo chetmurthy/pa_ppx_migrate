@@ -8,9 +8,9 @@ WD=$(shell pwd)
 DESTDIR=
 RM=rm
 
-SYSDIRS= pa_migrate pa_ocaml_migrate_parsetree
+SYSDIRS= pa_migrate
 
-TESTDIRS= tests
+TESTDIRS= pa_ocaml_migrate_parsetree tests
 
 PACKAGES := pa_ppx.utils,pa_ppx.base,pa_ppx.import,pa_ppx.deriving
 

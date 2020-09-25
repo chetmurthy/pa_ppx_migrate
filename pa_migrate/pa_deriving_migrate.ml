@@ -75,7 +75,7 @@ value tyvars t =
 
 value to_type (_, t) =
   let loc = loc_of_ctyp t.srctype in
-  let rhs = <:ctyp< migrater_t $t.srctype$ $t.dsttype$ >> in
+  let rhs = <:ctyp< migrater_t 'aux $t.srctype$ $t.dsttype$ >> in
   let rhs = List.fold_right (fun subty rhs -> <:ctyp< $subty$ -> $rhs$ >>) t.subs_types rhs in
   if t.type_vars = [] then rhs else
   <:ctyp< ! $list:t.type_vars$ . $rhs$ >>
@@ -162,7 +162,7 @@ value convert_tyarg loc type_decls name tyargs =
   ] in
   let type_vars = Std.uniquize((tyvars srctype)@(tyvars dsttype)@
                           List.concat (List.map (fun (a,b) -> (tyvars a)@(tyvars b)) subs)) in
-  let subs_types = List.map (fun (a,b) -> <:ctyp< (migrater_t $a$ $b$) >>) subs in
+  let subs_types = List.map (fun (a,b) -> <:ctyp< (migrater_t 'aux $a$ $b$) >>) subs in
   { name = name
   ; srctype = srctype
   ; dsttype = dsttype
@@ -281,7 +281,7 @@ module Migrate = struct
 type t = {
   inherit_type : option MLast.ctyp
 ; dispatch_type_name : string
-; dispatch_table_value : string
+; dispatch_table_constructor : string
 ; dispatchers : list Dispatch1.t
 ; type_decls : list (string * MLast.type_decl)
 ; pretty_rewrites : list (string * Prettify.t)
@@ -293,20 +293,22 @@ value dispatch_table_type_decls loc t =
       let ty = Prettify.prettify t.pretty_rewrites ty in
       (loc_of_ctyp ty, dispatcher_name, False, ty, <:vala< [] >>)
     ) t.dispatchers in
-  let dispatch_table_type = <:ctyp< { $list:ltl$ } >> in
+  let aux = (loc, "aux", False, <:ctyp< 'aux >>, <:vala< [] >>) in
+  let dispatch_table_type = <:ctyp< { $list:[aux :: ltl]$ } >> in
   let migrater_type = match t.inherit_type with [
-    None -> <:ctyp< $lid:t.dispatch_type_name$ -> 'a -> 'b >>
-  | Some inhty -> <:ctyp< $lid:t.dispatch_type_name$ -> $inhty$ -> 'a -> 'b >>
+    None -> <:ctyp< $lid:t.dispatch_type_name$ 'aux -> 'a -> 'b >>
+  | Some inhty -> <:ctyp< $lid:t.dispatch_type_name$ 'aux -> $inhty$ -> 'a -> 'b >>
   ] in
-  [ <:type_decl< $lid:t.dispatch_type_name$ = $dispatch_table_type$ >> ;
-    <:type_decl< migrater_t 'a 'b = $migrater_type$ >> ]
+  [ <:type_decl< $lid:t.dispatch_type_name$ 'aux = $dispatch_table_type$ >> ;
+    <:type_decl< migrater_t 'aux 'a 'b = $migrater_type$ >> ]
 ;
 
 value dispatch_table_expr loc t =
   let lel = List.map (fun (dispatcher_name, t) ->
       (<:patt< $lid:dispatcher_name$ >>, <:expr< $lid:dispatcher_name$ >>)
     ) t.dispatchers in
-  <:expr< { $list:lel$ } >>
+  let aux = (<:patt< aux >>, <:expr< aux >>) in
+  <:expr< fun aux -> { $list:[aux :: lel]$ } >>
 ;
 
 value must_subst_lid (srclid, dstlid) li =
@@ -447,9 +449,9 @@ value build_context loc ctxt tdl =
       <:expr< $lid:id$ >> -> id
     | _ -> Ploc.raise loc (Failure "pa_deriving.migrate: must specify option dispatch_type")
   ] in
-  let dispatch_table_value = match option ctxt "dispatch_table_value" with [
+  let dispatch_table_constructor = match option ctxt "dispatch_table_constructor" with [
       <:expr< $lid:id$ >> -> id
-    | _ -> Ploc.raise loc (Failure "pa_deriving.migrate: must specify option dispatch_table_value name")
+    | _ -> Ploc.raise loc (Failure "pa_deriving.migrate: must specify option dispatch_table_constructor name")
   ] in
   let dispatchers = match option ctxt "dispatchers" with [
     <:expr:< { $list:lel$ } >> ->
@@ -480,7 +482,7 @@ value build_context loc ctxt tdl =
   {
     inherit_type = inherit_type ;
     dispatch_type_name = dispatch_type_name;
-    dispatch_table_value = dispatch_table_value;
+    dispatch_table_constructor = dispatch_table_constructor;
     dispatchers = dispatchers ;
     type_decls = type_decls ;
     pretty_rewrites = pretty_rewrites
@@ -742,13 +744,13 @@ value str_item_gen_migrate name arg = fun [
   <:str_item:< type $_flag:_$ $list:tdl$ >> ->
     let rc = Migrate.build_context loc arg tdl in
     let dispatch_type_decls = Migrate.dispatch_table_type_decls loc rc in
-    let dispatch_table_value = Migrate.dispatch_table_expr loc rc in
+    let dispatch_table_constructor_expression = Migrate.dispatch_table_expr loc rc in
     let migrate_dispatcher_decls = List.map (fun (dname,d) ->
         let e = Migrate.toplevel_generate_dispatcher rc (dname, d) in
         (<:patt< $lid:dname$ >>, e, <:vala< [] >>)
       ) rc.Migrate.dispatchers in
     let si0 = <:str_item< value $list:migrate_dispatcher_decls$ >> in
-    let si1 = <:str_item< value $lid:rc.Migrate.dispatch_table_value$ = $dispatch_table_value$ >> in
+    let si1 = <:str_item< value $lid:rc.Migrate.dispatch_table_constructor$ = $dispatch_table_constructor_expression$ >> in
   <:str_item< declare type $list:dispatch_type_decls$ ; $si0$ ; $si1$ ; end >>
 | _ -> assert False ]
 ;
@@ -756,7 +758,7 @@ value str_item_gen_migrate name arg = fun [
 Pa_deriving.(Registry.add PI.{
   name = "migrate"
 ; alternates = []
-; options = ["optional"; "default_dispatchers"; "dispatchers"; "dispatch_type"; "dispatch_table_value"; "inherit_type"]
+; options = ["optional"; "default_dispatchers"; "dispatchers"; "dispatch_type"; "dispatch_table_constructor"; "inherit_type"]
 ; default_options = let loc = Ploc.dummy in [ ("optional", <:expr< False >>) ]
 ; alg_attributes = ["nobuiltin"]
 ; expr_extensions = []

@@ -308,7 +308,7 @@ and out_phrase = [%import: All_ast.Ast_4_04.Outcometree.out_phrase]
 [@@deriving migrate
     { inherit_type = [%typ: location_t option]
     ; dispatch_type = dispatch_table_t
-    ; dispatch_table_value = dt
+    ; dispatch_table_constructor = make_dt
     ; default_dispatchers = [
         {
           srcmod = All_ast.Ast_4_04
