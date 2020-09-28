@@ -55,6 +55,6 @@ depexts: [
 
 build: [
   [make "sys"]
-  [make "test"]
+  [make "test"] {wit-test}
 ]
 install: [make "install"]
